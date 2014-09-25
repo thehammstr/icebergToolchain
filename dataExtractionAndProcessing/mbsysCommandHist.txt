@@ -1,0 +1,1000 @@
+  966  rm -rf arducopter/
+  967  cd ..
+  968  rm Arducopter/
+  969  rmdir Arducopter/
+  970  git clone http://github.com/diydrones/ardupilot
+  971  ls
+  972  cd ardupilot/
+  973  ls
+  974  cd FollowMe/
+  975  ls
+  976  more FollowMe.pde 
+  977  less FollowMe.pde 
+  978  ls
+  979  cd ..
+  980  ls
+  981  less README.md 
+  982  ls docs/
+  983  less README.md 
+  984  cd ArduCopter/
+  985  ls
+  986  clear
+  987  ls
+  988  less inertia.pde 
+  989  gedit ArduCopter.pde 
+  990  cd ~/Downloads/
+  991  ls
+  992  cd UPDATE/__MACOSX/
+  993  ls
+  994  cd UPDATE/
+  995  ls
+  996  ll
+  997  iceberg
+  998  svn diff
+  999  svn diff MapIcebergSimulate.m 
+ 1000  svn log MapIcebergSimulate.m 
+ 1001  svn log
+ 1002  svn status
+ 1003  svn log
+ 1004  svn add *.m
+ 1005  svn status
+ 1006  svn status GenerateRandomIcebergTrajectories
+ 1007  svn status GenerateRandomIcebergTrajectories.m 
+ 1008  svn status GenerateRandomIcebergTrajectoriesWallFollowing.m 
+ 1009  ls
+ 1010  svn diff GenerateRandomIcebergTrajectoriesWallFollowing.m 
+ 1011  svn log GenerateRandomIcebergTrajectoriesWallFollowing.m 
+ 1012  svn commit -m 'imagenex stuff added. Errors have values'
+ 1013  ps -a
+ 1014  kill 2143
+ 1015  matlab
+ 1016  cd GraphSLAM/
+ 1017  git status
+ 1018  git add GraphSLAM_initializeMap.m GraphSLAM_reduce.m
+ 1019  git status
+ 1020  git add .
+ 1021  git status
+ 1022  git commit -m 'graph slam now working up through reduction step'
+ 1023  git push
+ 1024  ps -a
+ 1025  sudo kill 15644
+ 1026  git status
+ 1027  git add GraphSLAM* icp.m
+ 1028  git add GraphSLAM*.m icp.m
+ 1029  git status
+ 1030  git commit -a -m 'unclear if correspondence is working yet, but at least it's coded...'
+ 1031  '
+ 1032  git add .
+ 1033  git status
+ 1034  git commit -m 'unclear if correspondence is working yet, but at least it's coded...'
+ 1035  '
+ 1036  git commit -m 'unclear if correspondence is working yet. Lots of tricky indexing.'
+ 1037  git push
+ 1038  man mkswap
+ 1039  ps -a
+ 1040  kill 28132
+ 1041  iceberg
+ 1042  cd GraphSLAM/
+ 1043  git status
+ 1044  git add .
+ 1045  git status
+ 1046  git help
+ 1047  gedit .gitignore 
+ 1048  git status
+ 1049  git add .gitignore
+ 1050  git rm OmegaAndZeta.mat
+ 1051  git status
+ 1052  git rm -f OmegaAndZeta.mat
+ 1053  git status
+ 1054  git commit -m 'not really working. changing measurement model'
+ 1055  git status
+ 1056  git push
+ 1057  ./mountCamelot
+ 1058  ls /mnt/
+ 1059  iceberg
+ 1060  which git
+ 1061  git config --global color.ui true
+ 1062  cd GraphSLAM/
+ 1063  ls
+ 1064  git init
+ 1065  git status
+ 1066  gedit .gitignore
+ 1067  git status
+ 1068  git add .gitignore GraphSLAM_initialize.m GraphSLAM_linearize.m MakeMapGraphSLAM.m cleanMeasurements.m reconstructTrueCloud.m testHarnesses/
+ 1069  git status
+ 1070  git commit -m 'initial addition of files'
+ 1071  cd ..
+ 1072  git clone --bare GraphSLAM/
+ 1073  ~/mountCamelot
+ 1074  git clone mmh13@camelot.stanford.edu:/git/GraphSLAM.git
+ 1075  ls GraphSLAM
+ 1076  ls
+ 1077  git clone mmh13@camelot.stanford.edu:/git/GraphSLAM.git
+ 1078  git clone mmh13@camelot.stanford.edu:~/git/GraphSLAM.git
+ 1079  git clone /mnt/ARL_camelot_users/mmh13/git/GraphSLAM.git/
+ 1080  ls GraphSLAM
+ 1081  cd GraphSLAM/
+ 1082  ls
+ 1083  ls testHarnesses/
+ 1084  matlab
+ 1085  ls /mnt/
+ 1086  iceberg
+ 1087  cd GraphSLAM/
+ 1088  git status
+ 1089  gedit .gitignore
+ 1090  git add .gitignore
+ 1091  git commit -m 'ignoring ~ files'
+ 1092  git config --global user.name 'Marcus'
+ 1093  git config --global user.email marcus.hammond@stanford.edu
+ 1094  git status
+ 1095  git commit -a -m ' '
+ 1096  ls .gitignore
+ 1097  less .gitignore
+ 1098  gedit .gitignore
+ 1099  git status
+ 1100  git add .
+ 1101  git commit -m ' '
+ 1102  git commit -m ' ignore ~ files '
+ 1103  git push
+ 1104  ./mountCamelot
+ 1105  man mount.cifs
+ 1106  iceberg
+ 1107  matlab
+ 1108  ls /mnt/
+ 1109  ./mountCamelot
+ 1110  iceberg
+ 1111  ps -a
+ 1112  kill 10330
+ 1113  ps -a
+ 1114  kill 12633
+ 1115  ps -a
+ 1116  kill 25182
+ 1117  ps -a
+ 1118  kill 25546
+ 1119  cd GraphSLAM/
+ 1120  git status
+ 1121  git add TestCorrespondences.m
+ 1122  git status
+ 1123  git add lookForLoopClosure.m 
+ 1124  git add GraphSLAM_initializeWithTruth.m
+ 1125  git status
+ 1126  git commit -a -m 'Saving progress. Working, but very sensitive to noise. TODO: add explicit heading information from imagenex'
+ 1127  git push
+ 1128  git status
+ 1129  git push
+ 1130  git pull
+ 1131  git branch
+ 1132  git help merge
+ 1133  gitk
+ 1134  git checkout master
+ 1135  gitk
+ 1136  git checkout vectorMeasurements 
+ 1137  gitk
+ 1138  git checkout directPoseMapping 
+ 1139  gitk
+ 1140  git checkout vectorMeasurements 
+ 1141  git help merge
+ 1142  git checkout master
+ 1143  git status
+ 1144  git merge vectorMeasurements 
+ 1145  gitk
+ 1146  git status
+ 1147  git push
+ 1148  gitk
+ 1149  ls
+ 1150  git branch
+ 1151  git branch -d vectorMeasurements 
+ 1152  git branch
+ 1153  cd /mnt/ARL_camelot_users/mmh13/
+ 1154  ls
+ 1155  cd git/
+ 1156  ls
+ 1157  iceberg
+ 1158  cd GraphSLAM/
+ 1159  git status
+ 1160  git diff
+ 1161  git commit -a -m 'changed some noise parameters. Still seems pretty sensitive to them'
+ 1162  git push
+ 1163  git branch
+ 1164  git help pus
+ 1165  git help push
+ 1166  git help checkout
+ 1167  git branch -b noBergMotionEstimate
+ 1168  git checkout -b noBergMotionEstimate
+ 1169  git branch
+ 1170  gedit TODOlist.txt
+ 1171  git status
+ 1172  git add TODOlist.txt
+ 1173  git branch
+ 1174  git status
+ 1175  git commit -a -m 'added to do list. Switched back to raw measurements for scan matching'
+ 1176  git push
+ 1177  git branch
+ 1178  git push -u origin noBergMotionEstimate 
+ 1179  git branch
+ 1180  ps -a
+ 1181  kill 25761
+ 1182  iceberg
+ 1183  cd GraphSLAM/
+ 1184  matlab
+ 1185  ./mountCamelot
+ 1186  iceberg
+ 1187  cd GraphSLAM/
+ 1188  git diff
+ 1189  gitk
+ 1190  git branch
+ 1191  git commit -a -m 'not working. switching branches'
+ 1192  git checkout master
+ 1193  ps -a
+ 1194  kill 3016
+ 1195  git branch
+ 1196  git branch HeadingConstraints
+ 1197  git branch
+ 1198  git checkout HeadingConstraints 
+ 1199  gitk
+ 1200  git checkout master
+ 1201  gitk
+ 1202  git commit -a -m 'Algorithm working pretty well. Saving progress and branching to start heading constraints. Still need to make generic correspondence work'
+ 1203  git push
+ 1204  gitk
+ 1205  git help branch
+ 1206  git branch -d HeadingConstraints 
+ 1207  git branch HeadingConstraints
+ 1208  git checkout HeadingConstraints 
+ 1209  gitk
+ 1210  git log GraphSLAMcorrespondenceViaScanMatch.m
+ 1211  gitk
+ 1212  iceberg
+ 1213  cd GraphSLAM/
+ 1214  git branch ThreeDeeTolerant
+ 1215  git checkout ThreeDeeTolerant 
+ 1216  which mbgrdviz
+ 1217  cd devel
+ 1218  cd ~/Documents/
+ 1219  ls
+ 1220  sudo gtkterm &
+ 1221  type gterm
+ 1222  type gtkterm
+ 1223  sudo gtkterm
+ 1224  cd MBARI/process_real_data/
+ 1225  ls
+ 1226  cd ~/Desktop/mbsystemWorksho/
+ 1227  ls
+ 1228  cd mbsystemWorkshop/
+ 1229  ls
+ 1230  cd ExampleWASSPData/
+ 1231  ls
+ 1232  less Makefile
+ 1233  less Makefile.txt 
+ 1234  make
+ 1235  gedit Makefile.txt 
+ 1236  mv Makefile.txt Makefile
+ 1237  make
+ 1238  gedit Makefile
+ 1239  typ mbgrdviz
+ 1240  type mbgrdviz
+ 1241  make
+ 1242  ls
+ 1243  make
+ 1244  make clean
+ 1245  Make all
+ 1246  make all
+ 1247  ls
+ 1248  type mbgrdiz | grep
+ 1249  type mbgrdviz
+ 1250  grep -r MB_FORMAT* /usr/local/mbsystem
+ 1251  sudo grep -r MB_FORMAT* /usr/local/mbsystem
+ 1252  gedit Makefile
+ 1253  gedit example1.c
+ 1254  gedit /usr/local/mbsystem/include/mb_define.h 
+ 1255  gedit /usr/local/mbsystem/include/mb_format.h 
+ 1256  make
+ 1257  cd ~
+ 1258  ls
+ 1259  cd devel/
+ 1260  ls
+ 1261  sudo apt-get install gmt
+ 1262  sudo apt-get install netcdf
+ 1263  sudo apt-get install netCDF
+ 1264  sudo apt-get install perl
+ 1265  sudo apt-get install x11
+ 1266  sudo apt-get install X11
+ 1267  sudo apt-get install 
+ 1268  sudo apt-get update
+ 1269  ftp ftp.ldeo.columbia.edu
+ 1270  ls
+ 1271  tar xvzf MB-System.tar.gz 
+ 1272  ls
+ 1273  cd mbsystem-5.4.2168/
+ 1274  ls
+ 1275  sudo ./configure
+ 1276  sudo apt-get install libproj
+ 1277  sudo apt-get install lib-proj
+ 1278  sudo apt-get install proj
+ 1279  sudo ./configure
+ 1280  sudo apt-get install gmt
+ 1281  sudo ./configure
+ 1282  type gmt
+ 1283  which gmt
+ 1284  sudo apt-get uninstall gmt
+ 1285  sudo apt-get remove gmt
+ 1286  sudo apt-get install gmt
+ 1287  sudo ./configure
+ 1288  sudo apt-get install libnetcdf-dev
+ 1289  type yum
+ 1290  cd ..
+ 1291  wget http://gmt/soest.hawaii.edu/gmt/install_gmt.sh
+ 1292  mv ~/Documents/gmt440/gmt-5.1.1/ .
+ 1293  ls
+ 1294  cd gmt-5.1.1/
+ 1295  ls
+ 1296  cmake
+ 1297  cmake .
+ 1298  ls
+ 1299  man cmake
+ 1300  cmake ..
+ 1301  cmake . ..
+ 1302  cd ..
+ 1303  cmake gmt-5.1.1/
+ 1304  man cmake
+ 1305  ls
+ 1306  rm gmt-5.1.1/CMakeCache.txt 
+ 1307  rm gmt-5.1.1/CMakeFiles/
+ 1308  rmdir gmt-5.1.1/CMakeFiles/
+ 1309  rm -r gmt-5.1.1/CMakeFiles/
+ 1310  man cmake
+ 1311  cd gmt-5.1.1/
+ 1312  ls
+ 1313  mkdir makefolder
+ 1314  cd makefolder/
+ 1315  cmake ..
+ 1316  ls
+ 1317  make install
+ 1318  sudo make install
+ 1319  ls
+ 1320  cd ..
+ 1321  ls
+ 1322  cd ..
+ 1323  ls
+ 1324  cd mbsystem-5.4.2168/
+ 1325  ls
+ 1326  make install
+ 1327  make
+ 1328  make all
+ 1329  make
+ 1330  ls
+ 1331  ./configure
+ 1332  sudo ./configure
+ 1333  ls /usr/include/
+ 1334  cd ..
+ 1335  cd gmt-5.1.1/
+ 1336  ls
+ 1337  sudo apt-get install ghostscript build-essential cmake libnetcdf-dev libgdal1-dev
+ 1338  ls
+ 1339  make install
+ 1340  cd makefolder/
+ 1341  ls
+ 1342  make
+ 1343  make install
+ 1344  sudo make install
+ 1345  cd ../../mbsystem-5.4.2168/
+ 1346  sudo make install
+ 1347  sudo make
+ 1348  ls
+ 1349  sudo ./configure
+ 1350  ls /usr/local/include/
+ 1351  sudo ./configure --with-gmt-include /usr/local/include
+ 1352  sudo ./configure --with-gmt-include /usr/local/include/gmt
+ 1353  sudo ./configure --with-gmt-include/usr/local/include/gmt
+ 1354  less configure
+ 1355  sudo ./configure --with-gmt-include
+ 1356  sudo ./configure --with-gmt-include '/usr/local/include/gmt'
+ 1357  sudo ./configure --with
+ 1358  sudo ./configure --with-gmt-include
+ 1359  sudo ./configure --with-gmt-include=/usr/local/include/gmt
+ 1360  make
+ 1361  sudo make
+ 1362  sudo apt-get install ps
+ 1363  sudo apt-get install pslib
+ 1364  sudo apt-get install pslib-dev
+ 1365  sudo make
+ 1366  cd devel/
+ 1367  ls
+ 1368  cd mbsystem-5.4.2168/
+ 1369  ls
+ 1370  sudo make
+ 1371  ls /usr/local/include/
+ 1372  ls /usr/local/lib
+ 1373  ls
+ 1374  gedit install
+ 1375  gedit install_makefiles 
+ 1376  sudo ./configure --with-gmt-include=/usr/local/include/gmt --with-gmt-lib=/usr/local/lib/gmt
+ 1377  sudo make
+ 1378  ls /usr/local/include/gmt/
+ 1379  sudo apt-get install pslib-dev
+ 1380  ls /usr/local/include/gmt/
+ 1381  cd ../gmt-5.1.1/
+ 1382  ls
+ 1383  cd makefolder/
+ 1384  ls
+ 1385  sudo make
+ 1386  sudo make install
+ 1387  ls /usr/local/include/gmt/
+ 1388  ls
+ 1389  cd ../
+ 1390  ls
+ 1391  ls src
+ 1392  cd makefolder/
+ 1393  make install
+ 1394  sudo make install
+ 1395  cd ../../mbsystem-5.4.2168/
+ 1396  ls
+ 1397  sudo ./configure --with-gmt-include=/usr/local/ --with-gmt-lib=/usr/local/
+ 1398  sudo ./configure --with-gmt-include=/usr/local/* --with-gmt-lib=/usr/local/*
+ 1399  sudo ./configure --with-gmt-include=/usr/local/include --with-gmt-lib=/usr/local/lib
+ 1400  ls ../gmt-5.1.1/src/
+ 1401  cd ../gmt-5.1.1/src/
+ 1402  pwd
+ 1403  ls ..
+ 1404  sudo ./configure --with-gmt-include=/home/marcus/devel/gmt-5.1.1/src --with-gmt-lib=/Users
+ 1405  cd ../../mbsystem-5.4.2168/
+ 1406  sudo ./configure --with-gmt-include=/home/marcus/devel/gmt-5.1.1/src --with-gmt-lib=/usr/local/lib
+ 1407  sudo make 
+ 1408  ls /usr/local/include/
+ 1409  ls /usr/local/include/gmt/
+ 1410  cd ../gmt-5.1.1/makefolder/
+ 1411  ls
+ 1412  sudo make install
+ 1413  ls
+ 1414  less cmake_install.cmake 
+ 1415  gedit cmake_install.cmake 
+ 1416  cd ../../mbsystem-5.4.2168/
+ 1417  ls
+ 1418  sudo make
+ 1419  ls
+ 1420  gedit configure
+ 1421  sudo ./configure
+ 1422  sudo apt-get install gmt
+ 1423  clear
+ 1424  sudo apt-get install libgmt-dev
+ 1425  ls
+ 1426  gedit install_makefiles 
+ 1427  sudo make
+ 1428  sudo ./configure --with-gmt-include=/usr/local/include --with-gmt-lib=/usr/local/lib
+ 1429  sudo ./configure --with-gmt-include=/usr/include --with-gmt-lib=/usr/lib
+ 1430  sudo ./configure --with-gmt-include=/usr/include/gmt --with-gmt-lib=/usr/lib/gmt
+ 1431  sudo make
+ 1432  sudo make install
+ 1433  ls
+ 1434  which mbgrdviz
+ 1435  cd ~/Desktop/
+ 1436  ls
+ 1437  cd mbsystemWorksho/
+ 1438  ls
+ 1439  cd mbsystemWorkshop/
+ 1440  ls
+ 1441  cd ExampleWASSPData/
+ 1442  ls
+ 1443  gedit Makefile
+ 1444  ls /usr/local/mbsystem/
+ 1445  exit
+ 1446  cd devel/
+ 1447  ls
+ 1448  ls MBsys/
+ 1449  rm -r MBsys/
+ 1450  ls
+ 1451  rm -r MB-System.tar.gz 
+ 1452  ls
+ 1453  cd workspace/
+ 1454  ls
+ 1455  cd ..
+ 1456  ls
+ 1457  clear
+ 1458  ls
+ 1459  mkdir icebergRealData
+ 1460  cd icebergRealData/
+ 1461  ls
+ 1462  mb7k2ss /mnt/ARL_camelot_public/Projects/mbari/astep/20121031m1/20121031_200244p.mb88
+ 1463  mb7k2ss /mnt/ARL_camelot_public/Projects/mbari/astep/20121031m1/datalist7k.mb-1
+ 1464  sudo mb7k2ss /mnt/ARL_camelot_public/Projects/mbari/astep/20121031m1/datalist7k.mb-1
+ 1465  cp /mnt/ARL_camelot_public/Projects/mbari/astep/20121031m1 .
+ 1466  sudo cp /mnt/ARL_camelot_public/Projects/mbari/astep/20121031m1 .
+ 1467  sudo cp -r /mnt/ARL_camelot_public/Projects/mbari/astep/20121031m1 .
+ 1468  ls
+ 1469  ll
+ 1470  rm -rf *
+ 1471  ls
+ 1472  ll
+ 1473  rm -r 20121031m1/
+ 1474  sudo rm -rf 20121031m1/
+ 1475  cd ~
+ 1476  ll
+ 1477  clear
+ 1478  ll
+ 1479  ls
+ 1480  ll
+ 1481  ll -a
+ 1482  ls
+ 1483  iceberg
+ 1484  cd GraphSLAM/
+ 1485  git status
+ 1486  gitk
+ 1487  git branch
+ 1488  git help branch
+ 1489  git branch -D weightedCorrespondences 
+ 1490  git branch
+ 1491  matlab
+ 1492  cd /usr/local/include/gmt
+ 1493  las
+ 1494  ls
+ 1495  clear
+ 1496  ls
+ 1497  cd ~/devel/gmt-5.1.1/
+ 1498  ls
+ 1499  cd src
+ 1500  ls
+ 1501  cd ..
+ 1502  cd makefolder/
+ 1503  ls
+ 1504  cmake ..
+ 1505  sudo make
+ 1506  ls /usr/local
+ 1507  ls /usr/local/lib/
+ 1508  ls /usr/local/include/gmt/
+ 1509  ls ./src
+ 1510  ls src
+ 1511  sudo make install
+ 1512  ls /usr/local/include/gmt/
+ 1513  sudo make install
+ 1514  man psxy
+ 1515  cd usr/local
+ 1516  ls
+ 1517  cd lib
+ 1518  ls
+ 1519  cd /usr/local
+ 1520  ls
+ 1521  cd lib/
+ 1522  ls
+ 1523  ll
+ 1524  cd gmt/
+ 1525  ls
+ 1526  cd plugins/
+ 1527  ls
+ 1528  cd ../..
+ 1529  ls
+ 1530  ll
+ 1531  ls
+ 1532  ls /usr/include/gmt/
+ 1533  type cc
+ 1534  cd ~
+ 1535  ./mountCamelot
+ 1536  cd /mnt/ARL_camelot_public/Projects/iceberg/
+ 1537  ls
+ 1538  cd ..
+ 1539  cd mbari/
+ 1540  ls
+ 1541  cd astep/
+ 1542  ls
+ 1543  cd 20121031m1/
+ 1544  ls
+ 1545  pwd
+ 1546  ls datalist*
+ 1547  cd /usr/local/mbsystem/
+ 1548  ls
+ 1549  ls man
+ 1550  ls share/
+ 1551  ls src/
+ 1552  cd Desktop/mbsystemWorksho/mbsystemWorkshop/ExampleWASSPData/
+ 1553  ls
+ 1554  make
+ 1555  make clearn
+ 1556  make clean
+ 1557  ls
+ 1558  make all
+ 1559  sudo make all
+ 1560  ls
+ 1561  less process.cmd
+ 1562  make clean
+ 1563  ls
+ 1564  make example1
+ 1565  ls
+ 1566  make example2
+ 1567  ls
+ 1568  make clean
+ 1569  make
+ 1570  ls
+ 1571  make
+ 1572  clear
+ 1573  make
+ 1574  make clean
+ 1575  make
+ 1576  ls
+ 1577  make
+ 1578  make clean
+ 1579  make
+ 1580  clear
+ 1581  make
+ 1582  make all
+ 1583  make clean
+ 1584  make
+ 1585  sudo make
+ 1586  type mbgrdviz
+ 1587  mbgrdivz
+ 1588  mbgrdviz
+ 1589  type mbgrdviz
+ 1590  cd /usr/local/mbsystem/
+ 1591  ls
+ 1592  cd src/
+ 1593  ls
+ 1594  ls mbio
+ 1595  cd ..
+ 1596  ls
+ 1597  cd bin/
+ 1598  ls
+ 1599  cd ..
+ 1600  ls
+ 1601  cd src/
+ 1602  ls
+ 1603  cd utilities/
+ 1604  ls
+ 1605  gedit mb7k2ss.c
+ 1606  sudo -s
+ 1607  gedit mb7k2ss.c
+ 1608  cd ..
+ 1609  make all
+ 1610  gedit mb7k2ss.c
+ 1611  gedit src/utilities/mb7k2ss.c
+ 1612  gedit src/utilities/mb7k2ss.c &
+ 1613  make all
+ 1614  ls bin/
+ 1615  type mb7k2ss
+ 1616  cd /mnt/ARL_camelot_public/Projects/mbari/astep/20121031m1/
+ 1617  ls
+ 1618  mb7k2ss datalist.mb-1
+ 1619  less datalist.mb-1
+ 1620  less datalist7k.mb-1
+ 1621  mb7k2ss datalist7k.mb-1
+ 1622  cd 2012.305.0
+ 1623  ls
+ 1624  cd 2012.305.04/
+ 1625  ls
+ 1626  less kearfottRaw.out 
+ 1627  less dvl.log 
+ 1628  cd ..
+ 1629  ls
+ 1630  mbprocess datalist.mb-1
+ 1631  mbprocess -Idatalist.mb-1
+ 1632  mbprocess
+ 1633  mbprocess -Idatalist.mb-1
+ 1634  cd /usr/local/mbsystem/
+ 1635  ls
+ 1636  cd src/
+ 1637  ls
+ 1638  cd ~/Desktop/
+ 1639  ls
+ 1640  cd mbsystemWorksho/
+ 1641  ls
+ 1642  cd mbsystemWorkshop/ExampleWASSPData/
+ 1643  ls
+ 1644  make
+ 1645  less process.cmd
+ 1646  cd /mnt/ARL_camelot_public/Projects/mbari/astep/20121031m1/
+ 1647  ls
+ 1648  mbdatalist
+ 1649  mbdatalist -F-1 -I tmplist > datalist-2
+ 1650  ls -l | grep mb88$ > tmplist
+ 1651  ls tmplist 
+ 1652  mbdatalist -F-1 -I tmplist > datalist-2
+ 1653  less datalist-2 
+ 1654  mbdatalist -I tmplist > datalist2
+ 1655  less datalist2
+ 1656  less tmplist 
+ 1657  man mbdatalist
+ 1658  ll /
+ 1659  ls -al /
+ 1660  rm tmplist 
+ 1661  ls -1 |grep mb88$ > tmplist
+ 1662  mbdatalist -F-1 -I tmplist > datalist-2
+ 1663  less datalist-2 
+ 1664  less tmplist 
+ 1665  mbdatalist -I tmplist
+ 1666  mbdatalist -I tmplist > datalist-2
+ 1667  less datalist-2
+ 1668  man mbdatalist
+ 1669  ll
+ 1670  ll *.mb88
+ 1671  cd ~/devel/
+ 1672  exit
+ 1673  cd /mnt/ARL_camelot_public/Projects/mbari/astep/
+ 1674  ls
+ 1675  cd 20121031m1/
+ 1676  ls
+ 1677  ll *.88*
+ 1678  ll *88*
+ 1679  mbprocess
+ 1680  mbprocess -Idatalist.mb-1
+ 1681  less datalist.mb-1
+ 1682  mbm_plot -F-1 -I datalist.mb-1
+ 1683  mbm_plot -F-1 -I datalist.mb-1 -N
+ 1684* mbm_plot -F-1 -I datalist.mb-1 -N
+ 1685  less datalist.mb-1
+ 1686  clear
+ 1687  ls *88*
+ 1688  mbm_plot
+ 1689  sudo -s
+ 1690  cd /mnt/ARL_camelot_users/mmh13/
+ 1691  cd Documents/
+ 1692  ls
+ 1693  ls -1 | grep mb88$ > tmplist
+ 1694  less tmplist 
+ 1695  mbdatalist -F-1 -I tmplist > datalist-1
+ 1696  less datalist-1 
+ 1697  sudo mbdatalist -F-1 -I tmplist > datalist-1
+ 1698  ls
+ 1699  cp 20121031_170449.mb88 ~/devel/icebergRealData/
+ 1700  cd ~/devel/icebergRealData/
+ 1701  ls
+ 1702  mbdatalist -F-1 -I tmplist > datalist-1
+ 1703  ls -1 | grep mb88$ > tmplist
+ 1704  mbdatalist -F-1 -I tmplist > datalist-1
+ 1705  less datalist-1 
+ 1706  ls
+ 1707  pwd
+ 1708  cd ~/Downloads/
+ 1709  ls
+ 1710  ll
+ 1711  sudo rm -r MATLAB/
+ 1712  cd ~/Documents/
+ 1713  ls
+ 1714  cd MBARI
+ 1715  ls
+ 1716  cd astep/
+ 1717  ls
+ 1718  cd ..
+ 1719  ls ASTEP/
+ 1720  rmdir ASTEP/
+ 1721  mv astep ~/devel/icebergRealData/
+ 1722  cd ~/devel/icebergRealData/
+ 1723  ls
+ 1724  ls datalist-1 
+ 1725  less datalist-1 
+ 1726  mbprocess -I datalist-1 
+ 1727  mblist -I datalist-1 
+ 1728  clear
+ 1729  ls
+ 1730  less datalist-1 
+ 1731  mblist -F-1 -I datalist-1 
+ 1732  mbdatalist -F-1 -I datalist-1 -N
+ 1733  ls
+ 1734  mbm_plot -F-1 -I datalist-1 -N
+ 1735  ./datalist-1.cmd 
+ 1736  ls
+ 1737  less datalist-1.cmd 
+ 1738  cd astep/
+ 1739  ls
+ 1740  cd 20121031m1/
+ 1741  ls
+ 1742  ls datalist.mb-1
+ 1743  less datalist.mb-1
+ 1744  mbm_plot -F-1 -I datalist.mb-1 -N
+ 1745  ./datalist.mb-1.cmd 
+ 1746  mbdatalist -F-1 -I datalist.mb-1 -R-121.995833/-121.9875/36.776389/36.780556 \ > wall-datalist
+ 1747  less wall-datalist 
+ 1748  mbm_plot -F-1 -I wall-datalist -N
+ 1749  ./wall-datalist.cmd 
+ 1750  mbm_plot -F-1 -I wall-datalist -N -G2
+ 1751  ./wall-datalist.cmd 
+ 1752  mbm_plot -F-1 -I wall-datalist -N -G1
+ 1753  ./wall-datalist.cmd 
+ 1754  mbm_plot -F-1 -I wall-datalist -N -G3
+ 1755  ./wall-datalist.cmd 
+ 1756  mbm_plot -F-1 -I wall-datalist -N -G5
+ 1757  ./wall-datalist.cmd 
+ 1758  mbm_plot -F-1 -I wall-datalist -N -G1 -C
+ 1759  ./wall-datalist.cmd 
+ 1760  less wall-datalist.cmd 
+ 1761  type mbdatalist 
+ 1762  mbprocess -I wall-datalist
+ 1763  ls
+ 1764  cd ..
+ 1765  ls
+ 1766  cd ..
+ 1767  ls
+ 1768  mbprocess -I 20121031_170449.mb88
+ 1769  rm 20121031_170449.mb88.f*
+ 1770  rm 20121031_170449.mb88.i*
+ 1771  mbprocess -I 20121031_170449.mb88
+ 1772  ls
+ 1773  man mbprocess 
+ 1774  mbprocess -I 20121031_170449.mb88 -O wahoo
+ 1775  ls
+ 1776  man mbnavadjust 
+ 1777  mbnavadjust 
+ 1778  mbdatalist -F-1 -I datalist-1 -N
+ 1779  ls
+ 1780  man mbnavadjust 
+ 1781  cp ~/Desktop/mbsystemWorksho/mbsystemWorkshop/ExampleWASSPData/example2.c .
+ 1782  ls
+ 1783  gedit example2.c 
+ 1784  cp ~/Desktop/mbsystemWorksho/mbsystemWorkshop/ExampleWASSPData/Makefile .
+ 1785  less Makefile 
+ 1786  gedit Makefile 
+ 1787  make all
+ 1788  ./example2 
+ 1789  ./example2 -F88
+ 1790  ./example2 -F-1 -I datalist-1
+ 1791  make all
+ 1792  ./example2 -F-1 -I datalist-1
+ 1793  ./example2 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1794  cp ~/Desktop/mbsystemWorksho/mbsystemWorkshop/ExampleWASSPData/example3.c.txt example3.c
+ 1795  gedit Makefile
+ 1796  less ~/Desktop/mbsystemWorksho/mbsystemWorkshop/ExampleWASSPData/Makefile
+ 1797  make all
+ 1798  gedit example3.c 
+ 1799  make all
+ 1800  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1801  make all
+ 1802  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1803  make all
+ 1804  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1805  make all
+ 1806  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1807  make all
+ 1808  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1809  make all
+ 1810  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1811  make all
+ 1812  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1813  make all
+ 1814  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1815  make all
+ 1816  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1817  make all
+ 1818  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1819  make all
+ 1820  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1821  make all
+ 1822  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1823  make all
+ 1824  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1825  make all
+ 1826  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1827  make all
+ 1828  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1829  make all
+ 1830  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1831  make all
+ 1832  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1833  make all
+ 1834  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1835  make all
+ 1836  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1837  make all
+ 1838  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1839  make all
+ 1840  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1841  make all
+ 1842  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1843  make all
+ 1844  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1845  make all
+ 1846  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1847  make all
+ 1848  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1849  make all
+ 1850  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1851  make all
+ 1852  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1853  make all
+ 1854  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1855  make all
+ 1856  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1857  make all
+ 1858  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1859  make all
+ 1860  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1861  make all
+ 1862  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1863  make all
+ 1864  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1865  make all
+ 1866  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1867  make all
+ 1868  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1869  gedit Makefile
+ 1870  make all
+ 1871  gdb ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1872  gdb -- help
+ 1873  man gdb
+ 1874  gdb example3 
+ 1875  make all
+ 1876  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1877  gdb example3
+ 1878  make all
+ 1879  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1880  make all
+ 1881  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1882  make all
+ 1883  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1884  make all
+ 1885  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1886  make all
+ 1887  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1888  make all
+ 1889  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1890  make all
+ 1891  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1892  make all
+ 1893  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1894  make all
+ 1895  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1896  make all
+ 1897  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1898  make all
+ 1899  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1900  make all
+ 1901  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1902  make all
+ 1903  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1904  make all
+ 1905  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1906  make all
+ 1907  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1908  make all
+ 1909  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1910  make all
+ 1911  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1912  make all
+ 1913  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1914  make all
+ 1915  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1916  make all
+ 1917  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1918  ls astep/20121031m1/
+ 1919  make all
+ 1920  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1921  less extractedData.csv 
+ 1922  ll extractedData.csv 
+ 1923  matlab &
+ 1924  pwd
+ 1925  ls
+ 1926  cd ~/devel/icebergRealData/
+ 1927  less extractedData.csv 
+ 1928  make all
+ 1929  ./example3 -F-1 -I ./astep/20121031m1/wall-datalist
+ 1930  ls
+ 1931  less extractedData.csv 
+ 1932  matlab &
+ 1933  ps -al
+ 1934  kill 17081
+ 1935  ps -al
+ 1936  kill 17734
+ 1937  ps -al
+ 1938  kill 18036
+ 1939  ps -al
+ 1940  kill 18221
+ 1941  matlab
+ 1942  gedit &
+ 1943  git log
+ 1944  iceberg
+ 1945  cd GraphSLAM/
+ 1946  git log
+ 1947  git diff
+ 1948  cd ~/devel/icebergRealData/
+ 1949  ls
+ 1950  gedit example3.c &
+ 1951  ls astep/
+ 1952  history
+ 1953  ls
+ 1954  type bash
+ 1955  mbdatalist -F-1 -I tmplist > datalist-1
+ 1956  less datalist-1
+ 1957  cd astep/20121030m1/
+ 1958  ls -1 |grep mb88$ > tmplist
+ 1959  less tmplist 
+ 1960  sudo mbdatalist -F-1 -I tmplist > datalist-1
+ 1961  ll
+ 1962  cd ../../
+ 1963  ls
+ 1964  history
+ 1965  history > mbsysCommandHist
