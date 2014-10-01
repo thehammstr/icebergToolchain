@@ -60,7 +60,6 @@ int main(int argc, char** argv)
         }
         poseIdx++;
 	path.poses.push_back(pose);
-	cout<< pose.inputs[0] << " " << pose.inputs[1] << endl;
 	if (pose.measurements.size() > 0){
 		Nobs = pose.measurements.back().featureIndex;
 	}
@@ -94,5 +93,9 @@ int main(int argc, char** argv)
     }
     std::cout<<uniqueCounter+1<<" unique features"<<std::endl;
     //boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
-    path.PlotTrajectory();	
+    //path.PlotTrajectory();	
+    pcl::PointCloud<pcl::PointXYZ>::Ptr subcloud;
+    subcloud = path.ExtractSubcloud(2400,2580);
+
+
 }

@@ -80,6 +80,7 @@ class Trajectory{
 		Trajectory(std::vector<PoseNode> poses_in);
 		std::vector<PoseNode> poses;
 		bool PlotTrajectory(void);
+                pcl::PointCloud<pcl::PointXYZ>::Ptr ExtractSubcloud(int, int);
                 void addConstBias(double);
 		void updateWithConstBias(double);
 		double plotDuration;

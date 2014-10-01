@@ -2,3 +2,7 @@
 *.swp
 *.o
 *.csv
+*.pcd
+*.png
+*.cam
+*.cmake

@@ -2,6 +2,7 @@
 #include "NodeDefinitions.h"
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
+#include <pcl/common/transforms.h>
 #include <time.h>
 ResonMeasurement::ResonMeasurement(int idx, double x,double y, double z, double n){
 	state[0] = x;
@@ -101,7 +102,8 @@ bool Trajectory::PlotTrajectory(void){
     }
   basic_cloud_ptr->width = 1;
   basic_cloud_ptr->height = basic_cloud_ptr->points.size();
-  // --------------------------------------------
+  featureCloud->width = 1;
+  featureCloud->height = featureCloud->points.size();  // --------------------------------------------
   // -----Open 3D viewer and add point cloud-----
   // --------------------------------------------
   boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
@@ -125,8 +127,9 @@ bool Trajectory::PlotTrajectory(void){
      }
   //viewer->close();
 
-  std::cout << "width: " << basic_cloud_ptr->width << ", height:  "<< basic_cloud_ptr->height<<std::endl;
+  std::cout << "width: " << featureCloud->width << ", height:  "<< featureCloud->height<<std::endl;
   pcl::io::savePCDFileASCII("output_traj.pcd",*basic_cloud_ptr);
+  pcl::io::savePCDFileASCII("output_cloud.pcd",*featureCloud);
 
   return true;
 }
@@ -204,4 +207,72 @@ FeatureNode::FeatureNode(PoseNode Pose, ResonMeasurement Meas){
 
 }
 
+pcl::PointCloud<pcl::PointXYZ>::Ptr Trajectory::ExtractSubcloud(int idx1, int idx2){
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr basic_cloud_ptr (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr featureCloud (new pcl::PointCloud<pcl::PointXYZ>);
+
+   for (int ii = idx1; ii<idx2; ii++){
+	pcl::PointXYZ basic_point;
+	basic_point.x = poses[ii].yEst();
+	basic_point.y = poses[ii].xEst();
+	basic_point.z = -poses[ii].zEst();	
+	basic_cloud_ptr->points.push_back(basic_point);
+	for (int jj = 0; jj<poses[ii].measurements.size(); jj++){
+		FeatureNode feature_j(poses[ii],poses[ii].measurements[jj]);
+		pcl::PointXYZ featurePoint;
+		featurePoint.x = feature_j.state[1];
+		featurePoint.y = feature_j.state[0];
+		featurePoint.z = -feature_j.state[2];
+		featureCloud->points.push_back(featurePoint);
+		
+
+	}
+
+
+    }
+  basic_cloud_ptr->width = 1;
+  basic_cloud_ptr->height = basic_cloud_ptr->points.size();
+  featureCloud->width = 1;
+  featureCloud->height = featureCloud->points.size();
+  // --------------------------------------------
+  // -----Open 3D viewer and add point cloud-----
+  // --------------------------------------------
+  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+  viewer->setBackgroundColor (0, 0, 0);
+  viewer->addPointCloud<pcl::PointXYZ> (basic_cloud_ptr, "trajectory");
+  viewer->addPointCloud<pcl::PointXYZ> (featureCloud, "features");
+  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "trajectory");
+  viewer->addCoordinateSystem (1.0);
+  viewer->setCameraPosition(1312.78,565.839,1102.13,943.747,725.283,265.458, -0.828261,0.355559,0.433083);
+  viewer->setCameraFieldOfView(0.8575);
+  viewer->setCameraClipDistances(86.7214, 3962.83);
+  viewer->setPosition(66,52);
+  viewer->setSize(1280,512); 
+  time_t startTime;
+  startTime = time(NULL);
+  //while (!viewer->wasStopped () && time(NULL) - startTime < plotDuration)
+  while (!viewer->wasStopped ())
+     {
+       viewer->spinOnce (100);
+       boost::this_thread::sleep (boost::posix_time::microseconds (100));
+     }
+  //viewer->close();
+
+  std::cout << "width: " << basic_cloud_ptr->width << ", height:  "<< basic_cloud_ptr->height<<std::endl;
+  // shift feature cloud so that its origin is the "middle" pose
+  pcl::PointCloud<pcl::PointXYZ>::Ptr shiftedFeatureCloud (new pcl::PointCloud<pcl::PointXYZ>);
+  // extract "middle" pose
+  int refIdx = idx1 + (idx2-idx1)/2;
+  // build transformation 
+  Eigen::Affine3f xform2 = Eigen::Affine3f::Identity();
+  xform2.translation() << -poses[refIdx].yEst(), -poses[refIdx].xEst(), poses[refIdx].zEst();
+  std::cout<< poses[refIdx].yEst() << " " << poses[refIdx].xEst()<<" "<< -poses[refIdx].zEst()<<std::endl;
+  // do it
+  pcl::transformPointCloud(*featureCloud,*shiftedFeatureCloud,xform2);
+  // save it
+  pcl::io::savePCDFileASCII("subcloud.pcd",*shiftedFeatureCloud);
+
+  return featureCloud;
+}
 

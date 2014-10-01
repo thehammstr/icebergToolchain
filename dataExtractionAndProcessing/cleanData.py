@@ -39,7 +39,7 @@ def beamParse(rowList):
 def main(args):
    if (len(sys.argv) < 2) :
       # default
-      filename = 'fullWallextractedData.csv'
+      filename = '../DATA/Soquel20121031/fullWallextractedData.csv'
    else:
       # something exciting?
       filename = sys.argv[1]
@@ -55,6 +55,7 @@ def main(args):
    scan = []
    # read in data, group by timestamp
    startPos = next(datareader,None)
+   print startPos
    startTime = float(startPos[_TIME_])
    lastTime = startTime-.333
    startState,spd = stateParse(startPos)
@@ -231,7 +232,7 @@ def printScansToCSV(trajectory,beamHist,outfile='state_and_ranges.csv'):
    # how much we be writing?
    logCnt,stateSize = np.shape(trajectory)
    # header
-   file_object.write('Format: time - x - y - z - phi - theta - psi - commanded speed - omega - dvl flag - dvl - measurements (4dof)\n')
+   file_object.write('Format: time - x - y - z - phi - theta - psi - commanded speed - omega - dvl flag - dvl - measurements (scan number 4dof)\n')
    # ok, write it then
    scanNum = 0
    for ii in range(logCnt):
