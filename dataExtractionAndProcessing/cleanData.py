@@ -173,7 +173,7 @@ def cleanScan(scanInput,subsample = 4):
     # range jump threshold for declaring new regions
     threshold = 2.
     # number of returns in a given region needed to declare it good
-    nThresh = 100/subsample
+    nThresh = 20/subsample
     norms = np.zeros(nScans)
     norms[0]=np.linalg.norm(scan[0])
     regionLabel = 0
@@ -241,7 +241,7 @@ def printScansToCSV(trajectory,beamHist,outfile='state_and_ranges.csv'):
       for jj in range(1,stateSize):
          file_object.write(",%f" % trajectory[ii,jj])
       # clean the scan
-      scans,normals = cleanScan(beamHist[ii])
+      scans,normals = cleanScan(beamHist[ii],2)
       numScans = np.shape(scans)[0]
       # write to file
       for jj in range(numScans):

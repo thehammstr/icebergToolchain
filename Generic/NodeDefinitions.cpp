@@ -235,29 +235,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr Trajectory::ExtractSubcloud(int idx1, int id
   basic_cloud_ptr->height = basic_cloud_ptr->points.size();
   featureCloud->width = 1;
   featureCloud->height = featureCloud->points.size();
-  // --------------------------------------------
-  // -----Open 3D viewer and add point cloud-----
-  // --------------------------------------------
-  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
-  viewer->setBackgroundColor (0, 0, 0);
-  viewer->addPointCloud<pcl::PointXYZ> (basic_cloud_ptr, "trajectory");
-  viewer->addPointCloud<pcl::PointXYZ> (featureCloud, "features");
-  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "trajectory");
-  viewer->addCoordinateSystem (1.0);
-  viewer->setCameraPosition(1312.78,565.839,1102.13,943.747,725.283,265.458, -0.828261,0.355559,0.433083);
-  viewer->setCameraFieldOfView(0.8575);
-  viewer->setCameraClipDistances(86.7214, 3962.83);
-  viewer->setPosition(66,52);
-  viewer->setSize(1280,512); 
-  time_t startTime;
-  startTime = time(NULL);
-  //while (!viewer->wasStopped () && time(NULL) - startTime < plotDuration)
-  while (!viewer->wasStopped ())
-     {
-       viewer->spinOnce (100);
-       boost::this_thread::sleep (boost::posix_time::microseconds (100));
-     }
-  //viewer->close();
+
 
   std::cout << "width: " << basic_cloud_ptr->width << ", height:  "<< basic_cloud_ptr->height<<std::endl;
   // shift feature cloud so that its origin is the "middle" pose
@@ -273,6 +251,6 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr Trajectory::ExtractSubcloud(int idx1, int id
   // save it
   pcl::io::savePCDFileASCII("subcloud.pcd",*shiftedFeatureCloud);
 
-  return featureCloud;
+  return shiftedFeatureCloud;
 }
 
