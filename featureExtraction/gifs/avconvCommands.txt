@@ -1,0 +1,2 @@
+avconv -r 12 -i cloudView%d.png -mbd rd -flags +mv4+aic -trellis 2 -cmp 2 -subcmp 2 -g 300 -b 5000k test.mp4
+

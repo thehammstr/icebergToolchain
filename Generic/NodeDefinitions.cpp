@@ -245,6 +245,8 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr Trajectory::ExtractSubcloud(int idx1, int id
   // build transformation 
   Eigen::Affine3f xform2 = Eigen::Affine3f::Identity();
   xform2.translation() << -poses[refIdx].yEst(), -poses[refIdx].xEst(), poses[refIdx].zEst();
+  // don't shift z
+  //xform2.translation() << -poses[refIdx].yEst(), -poses[refIdx].xEst(), 0.;
   std::cout<< poses[refIdx].yEst() << " " << poses[refIdx].xEst()<<" "<< -poses[refIdx].zEst()<<std::endl;
   // do it
   pcl::transformPointCloud(*featureCloud,*shiftedFeatureCloud,xform2);

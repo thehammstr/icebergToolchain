@@ -4,6 +4,10 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
+#include <math.h>
+
+#define PI 3.14159265
+
 //#include "../Generic/CSVRow.h"
 #include "CSVRow.h"
 #include "ceres/ceres.h"
@@ -14,10 +18,13 @@
 // PCL stuff
 #include <boost/thread/thread.hpp>
 #include <pcl/common/common_headers.h>
+#include <pcl/common/centroid.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/features/fpfh.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/visualization/histogram_visualizer.h>
+#include <pcl/PCLPointCloud2.h>
 #include <pcl/console/parse.h>
 #include "cloudManipulation.h"
 #include <pcl/keypoints/harris_3d.h>
@@ -97,80 +104,96 @@ int main(int argc, char** argv)
     std::cout<<uniqueCounter+1<<" unique features"<<std::endl;
     //boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
     //path.PlotTrajectory();	
-    pcl::PointCloud<pcl::PointXYZ>::Ptr subcloud;
-    subcloud = path.ExtractSubcloud(2300,2580);
-    float scaleRadius = 1.;
-    pcl::PointCloud<pcl::Normal>::Ptr normals = getNormals(subcloud,scaleRadius);
-    
-    pcl::PointCloud<pcl::PointNormal>::Ptr cloudWithNormal = addNormalsToCloud(subcloud, normals);
+    int HalfWidth = 100;
 
-    normalsVis(subcloud,normals);
-    /*
-        HARRIS CORNERS
-    */
-    
-    pcl::HarrisKeypoint3D<pcl::PointXYZ,pcl::PointXYZI,pcl::Normal> detector;
-    detector.setNonMaxSupression (true);
-    detector.setRadius (2.*scaleRadius);
-    detector.setInputCloud(subcloud);
-    detector.setNormals(normals);
-    detector.setRefine(false);
-    detector.setThreshold(.001);
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
+    //for (int iOut = 1000 + HalfWidth; iOut < 3000-HalfWidth; iOut+=2*HalfWidth){
+    for (int iOut = 2000 + HalfWidth; iOut < 3000-HalfWidth; iOut+=HalfWidth){
+        // Extract reference pointcloud
+        pcl::PointCloud<pcl::PointXYZ>::Ptr subcloud1;
+        subcloud1 = path.ExtractSubcloud(iOut - HalfWidth,iOut+HalfWidth);
+        // calculate normals
+        float scaleRadius = 1.;
+        float harrisThresh = .003;
+        pcl::PointCloud<pcl::Normal>::Ptr normals1 = getNormals(subcloud1,scaleRadius);
+        // view
+        normalsVis(subcloud1,normals1); 
+        // Extract Features from said pointcloud
+        pcl::PointCloud<pcl::PointXYZ>::Ptr Harris1 = findHarrisCorners(subcloud1,normals1,scaleRadius*3.,harrisThresh);
+        // build descriptors of keypoints
+        pcl::PointCloud<pcl::FPFHSignature33>::Ptr descriptors1 = calculateFPFHDescriptors(Harris1,subcloud1,normals1,scaleRadius*3);
+        //for (int jOut = iOut+2*HalfWidth; jOut < 3000-HalfWidth;jOut+=2*HalfWidth){
+        int jOut = iOut+HalfWidth;
+            // extract comparison cloud
+        pcl::PointCloud<pcl::PointXYZ>::Ptr subcloud2;
+        subcloud2 = path.ExtractSubcloud(jOut - HalfWidth,jOut+HalfWidth);
+        // normals
+        pcl::PointCloud<pcl::Normal>::Ptr normals2 = getNormals(subcloud2,scaleRadius);
+            // extract features
+        pcl::PointCloud<pcl::PointXYZ>::Ptr Harris2 = findHarrisCorners(subcloud2,normals2,scaleRadius*3.,harrisThresh);
+            
+            pcl::visualization::PCLVisualizer viewer ("3D Viewer");
+            viewer.setSize(1100,1100);
+            pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> pccolor(subcloud1, 255, 0, 0);
+            pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> pccolorFeat(Harris1, 0, 255, 255);
+            pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> kpcolor(subcloud2, 255, 255, 0);
+            pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> kpcolorFeat(Harris2, 255, 255, 0);
+            viewer.addPointCloud(subcloud1,pccolor,"Cloud1.png");
+            viewer.addPointCloud(Harris1,pccolorFeat,"Cloud1Features.png");
+            //viewer.addPointCloud(subcloud2,kpcolor,"Cloud2.png");
+            //viewer.addPointCloud(Harris2,kpcolorFeat,"Cloud2Features.png");
+            viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 4, "Cloud1Features.png"); 
+            //viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "Cloud2Features.png"); 
+            
+            Eigen::Vector4f initViewPoint(-240.,0.,50.,1.);
+            Eigen::Vector4f focalPoint;
+            pcl::compute3DCentroid(*subcloud1,focalPoint);
+            focalPoint(2) += 30; // it was a little low
+            Eigen::Matrix4f rotmat;
+            float viewAngle = 0;
+            int labelIdx = 0;
+            std::string baseName ("gifs/cloudView");
+            while (!viewer.wasStopped () && viewAngle < 6.28)
+            {   // make rotmat
+                rotmat << cos(viewAngle),sin(viewAngle),0.,focalPoint(0),
+                            -sin(viewAngle),cos(viewAngle),0.,focalPoint(1),
+                              0.,0.,1., focalPoint(2),
+                              0.,0.,0.,1.;
+                viewAngle+=.03;
+                Eigen::Vector4f viewPoint = rotmat*(initViewPoint-focalPoint) ;
+                viewer.setCameraPosition(viewPoint(0),viewPoint(1),viewPoint(2),focalPoint(0),focalPoint(1),focalPoint(2),0.,0.,1.);
+                viewer.spinOnce();
+                viewer.saveScreenshot(baseName + boost::lexical_cast<std::string>(labelIdx) + ".png");
+                pcl_sleep (.4);
+                std::cout<<iOut<<std::endl;
+                labelIdx++;
+            } 
+           /* 
 
-    detector.setSearchMethod (tree);
-    
-    pcl::PointCloud<pcl::PointXYZI>::Ptr keypoints(new pcl::PointCloud<pcl::PointXYZI>());
-    detector.compute(*keypoints);
-    
-    std::cout << "keypoints detected: " << keypoints->size() << std::endl;
+   
+        }*/
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr keypoints3D(new pcl::PointCloud<pcl::PointXYZ>());
-    pcl::PointXYZ tmp;
-    double max = 0,min=1.;
-
-    for(pcl::PointCloud<pcl::PointXYZI>::iterator i = keypoints->begin(); i!= keypoints->end(); i++){
-        tmp = pcl::PointXYZ((*i).x,(*i).y,(*i).z);
-        if ((*i).intensity>max ){
-            std::cout << (*i) << " coords: " << (*i).x << ";" << (*i).y << ";" << (*i).z << std::endl;
-            max = (*i).intensity;
-        }
-        if ((*i).intensity<min){
-            min = (*i).intensity;
-        }
-        keypoints3D->push_back(tmp);
     }
+    
+    //pcl::PointCloud<pcl::PointNormal>::Ptr cloudWithNormal = addNormalsToCloud(subcloud1, normals1);
 
-    std::cout << "maximal response: "<< max << " min response:  "<< min<<std::endl;
-
+    //normalsVis(subcloud,normals);
     //show point cloud
-    pcl::visualization::PCLVisualizer viewer ("3D Viewer");
-    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> pccolor(subcloud, 0, 0, 255);
-    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> kpcolor(keypoints3D, 255, 0, 0);
-    viewer.addPointCloud(subcloud,pccolor,"testimg.png");
-    viewer.addPointCloud(keypoints3D,kpcolor,"keypoints.png");
-    viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "keypoints.png"); 
-    while (!viewer.wasStopped ())
-    {
-        viewer.spinOnce();
-        pcl_sleep (0.01);
-    } 
-
 
 
     
-
+/*
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /*  FPFH stuff
+    //  FPFH stuff
     // Create the FPFH estimation class, and pass the input dataset+normals to it
     pcl::FPFHEstimation<pcl::PointXYZ, pcl::Normal, pcl::FPFHSignature33> fpfh;
-    fpfh.setInputCloud (subcloud);
+    fpfh.setInputCloud (keypoints3D);
     fpfh.setInputNormals (normals);
+    fpfh.setSearchSurface(subcloud);
     // Create an empty kdtree representation, and pass it to the FPFH estimation object.
     // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree1 (new pcl::search::KdTree<pcl::PointXYZ>);
 
-    fpfh.setSearchMethod (tree);
+    fpfh.setSearchMethod (tree1);
 
     // Output datasets
     pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfhs (new pcl::PointCloud<pcl::FPFHSignature33> ());
@@ -181,8 +204,20 @@ int main(int argc, char** argv)
 
     // Compute the features
     fpfh.compute (*fpfhs);
-    normalsVis(subcloud,normals);*/
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    pcl::io::savePCDFileASCII("subcloudWithNormals.pcd",*cloudWithNormal);
+    std::cout<<fpfhs->points.size()<<std::endl;
+    pcl::visualization::PCLHistogramVisualizer hist;
+    const std::string id="cloud";
+    const std::string field= "fpfh"; 
+    hist.setBackgroundColor(0.,0.,0.);
+    //hist.addFeatureHistogram(*fpfhs,sizeof(fpfhs->points[0].histogram)/sizeof(fpfhs->points[0].histogram[0]),id);
+    hist.addFeatureHistogram(*fpfhs,field,1,id);
+    hist.spin();
+    for (int ii = 0; ii < fpfhs->points.size(); ii++){
+        hist.updateFeatureHistogram(*fpfhs,field,ii,id);
+        hist.spinOnce(1000);
+    } 
+*/
+   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //pcl::io::savePCDFileASCII("fpfh.pcl",*fpfhs);
+    //pcl::io::savePCDFileASCII("subcloudWithNormals.pcd",*cloudWithNormal);
 }

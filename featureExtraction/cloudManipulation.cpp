@@ -8,6 +8,7 @@
 #include <pcl/console/parse.h>
 #include <pcl/features/fpfh.h>
 #include <pcl/keypoints/harris_3d.h>
+#include "cloudManipulation.h"
 pcl::PointCloud<pcl::Normal>::Ptr getNormals(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,float radius)
 {
 
@@ -73,8 +74,7 @@ void normalsVis (
   viewer->addPointCloud<pcl::PointXYZRGB> (colorCloud, rgb,"subcloud");
   viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "subcloud");
   viewer->addPointCloudNormals<pcl::PointXYZRGB, pcl::Normal> (colorCloud, normals, 15, 1., "normals");
-  viewer->addCoordinateSystem (1.0);
-  viewer->initCameraParameters ();
+  //viewer->initCameraParameters ();
 
   while (!viewer->wasStopped ())
   {
@@ -84,4 +84,116 @@ void normalsVis (
   return;
 }
 
+pcl::PointCloud<pcl::PointXYZ>::Ptr 
+                    findHarrisCorners(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
+                                      pcl::PointCloud<pcl::Normal>::Ptr normals,
+                                      float radius, float threshold = .001)
+{
+    pcl::HarrisKeypoint3D<pcl::PointXYZ,pcl::PointXYZI,pcl::Normal> detector;
+    detector.setNonMaxSupression (true);
+    detector.setRadius (radius);
+    detector.setInputCloud(cloud);
+    detector.setNormals(normals);
+    detector.setRefine(false);
+    detector.setThreshold(threshold);
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
 
+    detector.setSearchMethod (tree);
+    
+    pcl::PointCloud<pcl::PointXYZI>::Ptr keypoints(new pcl::PointCloud<pcl::PointXYZI>());
+    detector.compute(*keypoints);
+    
+    std::cout << "keypoints detected: " << keypoints->size() << std::endl;
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr keypoints3D(new pcl::PointCloud<pcl::PointXYZ>());
+    pcl::PointXYZ tmp;
+    double max = 0,min=1.;
+
+    for(pcl::PointCloud<pcl::PointXYZI>::iterator i = keypoints->begin(); i!= keypoints->end(); i++){
+        tmp = pcl::PointXYZ((*i).x,(*i).y,(*i).z);
+        if ((*i).intensity>max ){
+            max = (*i).intensity;
+        }
+        if ((*i).intensity<min){
+            min = (*i).intensity;
+        }
+        keypoints3D->push_back(tmp);
+    }
+
+return keypoints3D;
+
+}
+
+pcl::PointCloud<pcl::FPFHSignature33>::Ptr 
+                    calculateFPFHDescriptors(pcl::PointCloud<pcl::PointXYZ>::Ptr keypoints,
+                                             pcl::PointCloud<pcl::PointXYZ>::Ptr searchSurface, 
+                                             pcl::PointCloud<pcl::Normal>::Ptr normals,
+                                             float radius)
+{
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //  FPFH stuff
+    // Create the FPFH estimation class, and pass the input dataset+normals to it
+    pcl::FPFHEstimation<pcl::PointXYZ, pcl::Normal, pcl::FPFHSignature33> fpfh;
+    fpfh.setInputCloud (keypoints);
+    fpfh.setInputNormals (normals);
+    fpfh.setSearchSurface(searchSurface);
+    // Create an empty kdtree representation, and pass it to the FPFH estimation object.
+    // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree1 (new pcl::search::KdTree<pcl::PointXYZ>);
+
+    fpfh.setSearchMethod (tree1);
+
+    // Output datasets
+    pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfhs (new pcl::PointCloud<pcl::FPFHSignature33> ());
+
+    // Use all neighbors in a sphere of radius 5cm
+    // IMPORTANT: the radius used here has to be larger than the radius used to estimate the surface normals!!!
+    fpfh.setRadiusSearch (radius);
+
+    // Compute the features
+    fpfh.compute (*fpfhs);
+
+return fpfhs;
+
+
+
+
+}
+
+/*
+    pcl::visualization::PCLVisualizer viewer ("3D Viewer");
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> pccolor(subcloud, 0, 0, 255);
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> kpcolor(keypoints3D, 255, 0, 0);
+    viewer.addPointCloud(subcloud,pccolor,"testimg.png");
+    viewer.addPointCloud(keypoints3D,kpcolor,"keypoints.png");
+    viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "keypoints.png"); 
+    while (!viewer.wasStopped ())
+    {
+        viewer.spinOnce();
+        pcl_sleep (0.01);
+    } 
+
+*/
+
+Eigen::Matrix4f matchFeaturesRANSAC(pcl::PointCloud<pcl::PointXYZ>::Ptr source_points,
+                                    pcl::PointCloud<pcl::FPFHSignature33>::Ptr source_descriptors,
+                                    pcl::PointCloud<pcl::PointXYZ>::Ptr target_points,
+                                    pcl::PointCloud<pcl::FPFHSignature33>::Ptr target_descriptors)
+
+{
+
+   pcl::SampleConsensusInitialAlignment<pcl::PointXYZ, pcl::PointXYZ,pcl::FPFHSignature33> sac;
+   pcl::PointCloud<pcl::PointXYZ>::Ptr aligned_cloud;
+   //Provide a pointer to the input point cloud and features
+   sac.setInputSource(source_points);
+   sac.setSourceFeatures (source_descriptors);
+   // Provide a pointer to the target point cloud and features
+   sac.setInputTarget(target_points);
+   sac.setTargetFeatures (target_descriptors);
+   // Align input to target to obtain
+   sac.align (*aligned_cloud);
+   Eigen::Matrix4f transformation = sac.getFinalTransformation();
+   return transformation;
+
+
+}
