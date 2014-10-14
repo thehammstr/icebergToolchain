@@ -153,6 +153,20 @@ pcl::PointCloud<pcl::FPFHSignature33>::Ptr
     // Compute the features
     fpfh.compute (*fpfhs);
 
+/*
+    pcl::visualization::PCLHistogramVisualizer hist;
+    const std::string id="cloud";
+    const std::string field= "fpfh"; 
+    hist.setBackgroundColor(0.,0.,0.);
+    //hist.addFeatureHistogram(*fpfhs,sizeof(fpfhs->points[0].histogram)/sizeof(fpfhs->points[0].histogram[0]),id);
+    hist.addFeatureHistogram(*fpfhs,field,1,id);
+    hist.spin();
+    for (int ii = 0; ii < fpfhs->points.size(); ii++){
+        hist.updateFeatureHistogram(*fpfhs,field,ii,id);
+        hist.spinOnce(1000);
+    }
+*/
+
 return fpfhs;
 
 
@@ -178,12 +192,12 @@ return fpfhs;
 Eigen::Matrix4f matchFeaturesRANSAC(pcl::PointCloud<pcl::PointXYZ>::Ptr source_points,
                                     pcl::PointCloud<pcl::FPFHSignature33>::Ptr source_descriptors,
                                     pcl::PointCloud<pcl::PointXYZ>::Ptr target_points,
-                                    pcl::PointCloud<pcl::FPFHSignature33>::Ptr target_descriptors)
+                                    pcl::PointCloud<pcl::FPFHSignature33>::Ptr target_descriptors, double * error)
 
 {
 
    pcl::SampleConsensusInitialAlignment<pcl::PointXYZ, pcl::PointXYZ,pcl::FPFHSignature33> sac;
-   pcl::PointCloud<pcl::PointXYZ>::Ptr aligned_cloud;
+   pcl::PointCloud<pcl::PointXYZ>::Ptr aligned_cloud (new pcl::PointCloud<pcl::PointXYZ>);
    //Provide a pointer to the input point cloud and features
    sac.setInputSource(source_points);
    sac.setSourceFeatures (source_descriptors);
@@ -192,8 +206,12 @@ Eigen::Matrix4f matchFeaturesRANSAC(pcl::PointCloud<pcl::PointXYZ>::Ptr source_p
    sac.setTargetFeatures (target_descriptors);
    // Align input to target to obtain
    sac.align (*aligned_cloud);
+   double max_range = 7.;
+   *error = sac.getFitnessScore(max_range);
    Eigen::Matrix4f transformation = sac.getFinalTransformation();
    return transformation;
 
 
 }
+
+            

@@ -26,10 +26,10 @@ pcl::PointCloud<pcl::FPFHSignature33>::Ptr
                                              float );
 
 
-Eigen::Matrix4f matchFeaturesRANSAC(pcl::PointCloud<pcl::PointXYZ> source_cloud,
-                                    pcl::PointCloud<pcl::FPFHSignature33> source_desc,
-                                    pcl::PointCloud<pcl::PointXYZ> target_cloud,
-                                    pcl::PointCloud<pcl::FPFHSignature33> target_desc);
+Eigen::Matrix4f matchFeaturesRANSAC(pcl::PointCloud<pcl::PointXYZ>::Ptr source_cloud,
+                                    pcl::PointCloud<pcl::FPFHSignature33>::Ptr source_desc,
+                                    pcl::PointCloud<pcl::PointXYZ>::Ptr target_cloud,
+                                    pcl::PointCloud<pcl::FPFHSignature33>::Ptr target_desc, double*);
 
 
 
