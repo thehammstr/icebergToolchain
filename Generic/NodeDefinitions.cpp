@@ -134,6 +134,80 @@ bool Trajectory::PlotTrajectory(void){
   return true;
 }
 
+bool Trajectory::PlotProposedMatches(int idx1, int idx2, float disp_sec){
+
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr basic_cloud_ptr (new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr line (new pcl::PointCloud<pcl::PointXYZRGB>);
+
+   for (int ii = 0; ii<poses.size(); ii++){
+	pcl::PointXYZRGB basic_point;
+	basic_point.x = poses[ii].yEst();
+	basic_point.y = poses[ii].xEst();
+	basic_point.z = -poses[ii].zEst();
+        if (ii == idx1 || ii == idx2){
+           basic_point.r = 255;
+           basic_point.g = 255;
+           basic_point.b = 0;
+        } else {	
+           basic_point.r = 0;
+           basic_point.g = 0;
+           basic_point.b = 255;
+	}
+        basic_cloud_ptr->points.push_back(basic_point);
+	
+
+    }
+  // build line
+  for (float id = 0.; id<=1.; id += .01){
+     pcl::PointXYZRGB linepoint;
+     linepoint.x = poses[idx1].yEst() + id*(poses[idx2].yEst()-poses[idx1].yEst());
+     linepoint.y = poses[idx1].xEst() + id*(poses[idx2].xEst()-poses[idx1].xEst());
+     linepoint.z = -poses[idx1].zEst() - id*(poses[idx2].zEst()-poses[idx1].zEst());
+     linepoint.r = 0;
+     linepoint.g = 255;
+     linepoint.b = 255;
+     line->points.push_back(linepoint);
+  }
+
+  basic_cloud_ptr->width = 1;
+  basic_cloud_ptr->height = basic_cloud_ptr->points.size();
+  // -----Open 3D viewer and add point cloud-----
+  // --------------------------------------------
+  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+  viewer->setBackgroundColor (0, 0, 0);
+  pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(basic_cloud_ptr);
+  pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> linecolor(line);
+  viewer->addPointCloud<pcl::PointXYZRGB> (basic_cloud_ptr, rgb,"trajectory");
+  viewer->addPointCloud<pcl::PointXYZRGB> (line, linecolor,"line");
+
+  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "trajectory");
+  viewer->addCoordinateSystem (1.0);
+  //viewer->setCameraPosition(1312.78,565.839,1102.13,943.747,725.283,265.458, -0.828261,0.355559,0.433083);
+  //viewer->setCameraFieldOfView(0.8575);
+  //viewer->setCameraClipDistances(86.7214, 3962.83);
+  viewer->setPosition(66,52);
+   time_t startTime;
+  startTime = time(NULL);
+  //while (!viewer->wasStopped () && time(NULL) - startTime < disp_sec)
+  float timer = 0.;
+  while (!viewer->wasStopped ()  && timer < disp_sec)
+     {
+       viewer->spinOnce (100);
+       pcl_sleep (.1);
+       timer+= .1;
+     }
+  viewer->close();
+
+  //std::cout << "width: " << featureCloud->width << ", height:  "<< featureCloud->height<<std::endl;
+  //pcl::io::savePCDFileASCII("output_traj.pcd",*basic_cloud_ptr);
+  //pcl::io::savePCDFileASCII("output_cloud.pcd",*featureCloud);
+
+  return true;
+}
+
+
+
+
 void Trajectory::updateWithConstBias(double bias){
 // update path with initial guess of bias
 	for (int i = 1; i<poses.size(); i++){

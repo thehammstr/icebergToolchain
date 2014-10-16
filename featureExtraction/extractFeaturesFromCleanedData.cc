@@ -7,7 +7,7 @@
 #include <math.h>
 
 #define PI 3.14159265
-#define VIEW_SPINNING_CLOUD 0
+#define VIEW_SPINNING_CLOUD 1
 #define SAVE_IMAGES 0
 //#include "../Generic/CSVRow.h"
 #include "CSVRow.h"
@@ -112,21 +112,22 @@ int main(int argc, char** argv)
     ofstream matchgoodness;
     matchgoodness.open("matches.csv");
     matchgoodness << "iOut, jOut, error" <<std::endl;
-    for (int iOut = 1000 + HalfWidth; iOut < 20000-HalfWidth; iOut+=HalfWidth){
+    for (int iOut = 1500 + HalfWidth; iOut < 20000-HalfWidth; iOut+=HalfWidth){
         // Extract reference pointcloud
         pcl::PointCloud<pcl::PointXYZ>::Ptr subcloud1;
         subcloud1 = path.ExtractSubcloud(iOut - HalfWidth,iOut+HalfWidth);
         // calculate normals
-        float scaleRadius = 1.;
+        float scaleRadius = 2.0;
         float harrisThresh = .003;
         pcl::PointCloud<pcl::Normal>::Ptr normals1 = getNormals(subcloud1,scaleRadius);
         // view
         //normalsVis(subcloud1,normals1); 
         // Extract Features from said pointcloud
-        pcl::PointCloud<pcl::PointXYZ>::Ptr Harris1 = findHarrisCorners(subcloud1,normals1,scaleRadius*3.,harrisThresh);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr Harris1 = findHarrisCorners(subcloud1,normals1,scaleRadius*2.,harrisThresh);
         // build descriptors of keypoints
-        pcl::PointCloud<pcl::FPFHSignature33>::Ptr descriptors1 = calculateFPFHDescriptors(Harris1,subcloud1,normals1,scaleRadius*3);
-        for (int jOut = iOut+2*HalfWidth; jOut < path.poses.size()-HalfWidth;jOut+=2*HalfWidth){
+        pcl::PointCloud<pcl::FPFHSignature33>::Ptr descriptors1 = calculateFPFHDescriptors(Harris1,subcloud1,normals1,scaleRadius*4);
+        //for (int jOut = iOut+2*HalfWidth+10000; jOut < path.poses.size()-HalfWidth;jOut+=2*HalfWidth){
+        for (int jOut = iOut+2*HalfWidth+9500; jOut < iOut+2*HalfWidth+11000;jOut+=2*HalfWidth){
            
            //int jOut = iOut+HalfWidth;
                // extract comparison cloud
@@ -135,16 +136,17 @@ int main(int argc, char** argv)
            // normals
            pcl::PointCloud<pcl::Normal>::Ptr normals2 = getNormals(subcloud2,scaleRadius);
                // extract features
-           pcl::PointCloud<pcl::PointXYZ>::Ptr Harris2 = findHarrisCorners(subcloud2,normals2,scaleRadius*3.,harrisThresh);
+           pcl::PointCloud<pcl::PointXYZ>::Ptr Harris2 = findHarrisCorners(subcloud2,normals2,scaleRadius*2.,harrisThresh);
 
            // build descriptors of keypoints
-           pcl::PointCloud<pcl::FPFHSignature33>::Ptr descriptors2 = calculateFPFHDescriptors(Harris2,subcloud2,normals2,scaleRadius*3);
+           pcl::PointCloud<pcl::FPFHSignature33>::Ptr descriptors2 = calculateFPFHDescriptors(Harris2,subcloud2,normals2,scaleRadius*4);
            // Match features
            double error;
            Eigen::Matrix4f Xform = matchFeaturesRANSAC(Harris2,descriptors2,Harris1,descriptors1,&error);
+           //Eigen::Matrix4f Xform = matchFeaturesRANSAC(subcloud2,descriptors2,subcloud1,descriptors1,&error);
            std::cout << Xform <<std::endl; 
            Eigen::Vector3d match;
-           match << double(iOut),double(jOut), min(error,17.);
+           match << double(iOut),double(jOut), error;
            std::cout << match <<std::endl;
            matchMetric.push_back(match);
            matchgoodness << match(0) << ","<<match(1)<<","<<match(2)<<std::endl;
@@ -154,13 +156,14 @@ int main(int argc, char** argv)
            pcl::transformPointCloud(*Harris2,*transformed_features,Xform);
 
            if (VIEW_SPINNING_CLOUD){
+               path.PlotProposedMatches(iOut,jOut,5.0);
                
                pcl::visualization::PCLVisualizer viewer ("3D Viewer");
                viewer.setSize(1100,1100);
-               pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> pccolor(subcloud1, 255, 0, 0);
+               pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> pccolor(subcloud1, 30, 0, 0);
                pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> pccolorFeat(Harris1, 0, 255, 255);
-               pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> kpcolor(transformed_cloud, 255, 255, 0);
-               pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> kpcolorFeat(transformed_features, 0, 255, 0);
+               pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> kpcolor(transformed_cloud, 30, 30, 0);
+               pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> kpcolorFeat(transformed_features, 255, 0, 255);
                viewer.addPointCloud(subcloud1,pccolor,"Cloud1.png");
                viewer.addPointCloud(Harris1,pccolorFeat,"Cloud1Features.png");
                viewer.addPointCloud(transformed_cloud,kpcolor,"Cloud2.png");

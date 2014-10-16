@@ -5,10 +5,12 @@
 #include <pcl/common/common_headers.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/visualization/histogram_visualizer.h>
 #include <pcl/console/parse.h>
 #include <pcl/features/fpfh.h>
 #include <pcl/keypoints/harris_3d.h>
 #include "cloudManipulation.h"
+#include <pcl/registration/icp.h>
 pcl::PointCloud<pcl::Normal>::Ptr getNormals(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,float radius)
 {
 
@@ -153,19 +155,21 @@ pcl::PointCloud<pcl::FPFHSignature33>::Ptr
     // Compute the features
     fpfh.compute (*fpfhs);
 
-/*
-    pcl::visualization::PCLHistogramVisualizer hist;
-    const std::string id="cloud";
-    const std::string field= "fpfh"; 
-    hist.setBackgroundColor(0.,0.,0.);
-    //hist.addFeatureHistogram(*fpfhs,sizeof(fpfhs->points[0].histogram)/sizeof(fpfhs->points[0].histogram[0]),id);
-    hist.addFeatureHistogram(*fpfhs,field,1,id);
-    hist.spin();
+    /*
+        pcl::visualization::PCLHistogramVisualizer hist;
+        hist.setBackgroundColor(0.,0.,0.);
+        hist.addFeatureHistogram(*fpfhs,sizeof(fpfhs->points[0].histogram)/sizeof(fpfhs->points[0].histogram[0])-1,"cloud");
+        hist.spinOnce(100);
     for (int ii = 0; ii < fpfhs->points.size(); ii++){
-        hist.updateFeatureHistogram(*fpfhs,field,ii,id);
-        hist.spinOnce(1000);
+        pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh (new pcl::PointCloud<pcl::FPFHSignature33> ());
+        fpfh->push_back(fpfhs->points[ii]);
+        const std::string id="cloud";
+        const std::string field= "fpfh"; 
+        //hist.addFeatureHistogram(*fpfhs,sizeof(fpfhs->points[0].histogram)/sizeof(fpfhs->points[0].histogram[0]),id);
+        hist.updateFeatureHistogram(*fpfh,sizeof(fpfhs->points[0].histogram)/sizeof(fpfhs->points[0].histogram[0])-1,id);
+        hist.spinOnce(100);
     }
-*/
+    */
 
 return fpfhs;
 
@@ -195,7 +199,7 @@ Eigen::Matrix4f matchFeaturesRANSAC(pcl::PointCloud<pcl::PointXYZ>::Ptr source_p
                                     pcl::PointCloud<pcl::FPFHSignature33>::Ptr target_descriptors, double * error)
 
 {
-
+   
    pcl::SampleConsensusInitialAlignment<pcl::PointXYZ, pcl::PointXYZ,pcl::FPFHSignature33> sac;
    pcl::PointCloud<pcl::PointXYZ>::Ptr aligned_cloud (new pcl::PointCloud<pcl::PointXYZ>);
    //Provide a pointer to the input point cloud and features
@@ -204,10 +208,32 @@ Eigen::Matrix4f matchFeaturesRANSAC(pcl::PointCloud<pcl::PointXYZ>::Ptr source_p
    // Provide a pointer to the target point cloud and features
    sac.setInputTarget(target_points);
    sac.setTargetFeatures (target_descriptors);
+   sac.setMinSampleDistance(10.);
+   sac.setNumberOfSamples(4);
+   sac.setMaxCorrespondenceDistance(100.);
+   sac.setCorrespondenceRandomness(3);
+   sac.setRANSACIterations(50);
    // Align input to target to obtain
    sac.align (*aligned_cloud);
-   double max_range = 7.;
-   *error = sac.getFitnessScore(max_range);
+   std::cout << "ransac iterations: "<<sac.getRANSACIterations()<<std::endl;
+   std::cout << "has converged? : "<< sac.hasConverged()<<std::endl;
+   
+   double max_range = 5.;
+
+   
+   /*
+   pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
+   icp.setInputSource(source_points);
+   icp.setInputTarget(target_points);
+   pcl::PointCloud<pcl::PointXYZ> Final;
+   icp.align(Final);
+   std::cout << "has converged:" << icp.hasConverged() << " score: " <<
+   icp.getFitnessScore() << std::endl;
+   std::cout << icp.getFinalTransformation() << std::endl;
+
+   *error = icp.getFitnessScore();
+   */
+   *error = sac.getFitnessScore();
    Eigen::Matrix4f transformation = sac.getFinalTransformation();
    return transformation;
 
