@@ -11,6 +11,8 @@
 #include <pcl/keypoints/harris_3d.h>
 #include "cloudManipulation.h"
 #include <pcl/registration/icp.h>
+#include <pcl/registration/gicp.h>
+
 pcl::PointCloud<pcl::Normal>::Ptr getNormals(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,float radius)
 {
 
@@ -199,7 +201,7 @@ Eigen::Matrix4f matchFeaturesRANSAC(pcl::PointCloud<pcl::PointXYZ>::Ptr source_p
                                     pcl::PointCloud<pcl::FPFHSignature33>::Ptr target_descriptors, double * error)
 
 {
-   
+   /*
    pcl::SampleConsensusInitialAlignment<pcl::PointXYZ, pcl::PointXYZ,pcl::FPFHSignature33> sac;
    pcl::PointCloud<pcl::PointXYZ>::Ptr aligned_cloud (new pcl::PointCloud<pcl::PointXYZ>);
    //Provide a pointer to the input point cloud and features
@@ -220,9 +222,9 @@ Eigen::Matrix4f matchFeaturesRANSAC(pcl::PointCloud<pcl::PointXYZ>::Ptr source_p
    
    double max_range = 5.;
 
+   */ 
    
-   /*
-   pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
+   pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
    icp.setInputSource(source_points);
    icp.setInputTarget(target_points);
    pcl::PointCloud<pcl::PointXYZ> Final;
@@ -232,9 +234,10 @@ Eigen::Matrix4f matchFeaturesRANSAC(pcl::PointCloud<pcl::PointXYZ>::Ptr source_p
    std::cout << icp.getFinalTransformation() << std::endl;
 
    *error = icp.getFitnessScore();
-   */
-   *error = sac.getFitnessScore();
-   Eigen::Matrix4f transformation = sac.getFinalTransformation();
+   
+   //*error = sac.getFitnessScore();
+   //Eigen::Matrix4f transformation = sac.getFinalTransformation();
+   Eigen::Matrix4f transformation = icp.getFinalTransformation();
    return transformation;
 
 

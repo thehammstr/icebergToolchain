@@ -142,8 +142,8 @@ int main(int argc, char** argv)
            pcl::PointCloud<pcl::FPFHSignature33>::Ptr descriptors2 = calculateFPFHDescriptors(Harris2,subcloud2,normals2,scaleRadius*4);
            // Match features
            double error;
-           Eigen::Matrix4f Xform = matchFeaturesRANSAC(Harris2,descriptors2,Harris1,descriptors1,&error);
-           //Eigen::Matrix4f Xform = matchFeaturesRANSAC(subcloud2,descriptors2,subcloud1,descriptors1,&error);
+           //Eigen::Matrix4f Xform = matchFeaturesRANSAC(Harris2,descriptors2,Harris1,descriptors1,&error);
+           Eigen::Matrix4f Xform = matchFeaturesRANSAC(subcloud2,descriptors2,subcloud1,descriptors1,&error);
            std::cout << Xform <<std::endl; 
            Eigen::Vector3d match;
            match << double(iOut),double(jOut), error;
