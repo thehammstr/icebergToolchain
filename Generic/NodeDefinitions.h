@@ -82,6 +82,7 @@ class Trajectory{
 		bool PlotTrajectory(void);
                 bool PlotProposedMatches(int, int, float);
                 pcl::PointCloud<pcl::PointXYZ>::Ptr ExtractSubcloud(int, int);
+                pcl::PointCloud<pcl::PointXYZ>::Ptr ExtractSubcloudAtAlt(int,int);
                 void addConstBias(double);
 		void updateWithConstBias(double);
 		double plotDuration;
