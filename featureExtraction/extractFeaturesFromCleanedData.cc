@@ -27,7 +27,7 @@
 #include <pcl/visualization/histogram_visualizer.h>
 #include <pcl/PCLPointCloud2.h>
 #include <pcl/console/parse.h>
-#include "cloudManipulation.h"
+#include "cloudManipulation.hpp"
 #include <pcl/keypoints/harris_3d.h>
 // MACROS
 

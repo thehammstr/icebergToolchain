@@ -20,7 +20,7 @@
 #include <pcl/registration/transformation_estimation_2D.h>
 #include <pcl/features/boundary.h>
 #include <pcl/range_image/range_image.h>
-
+#include <pcl/kdtree/kdtree_flann.h>
 
 pcl::PointCloud<pcl::Normal>::Ptr getNormals(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,float radius)
 {
@@ -545,14 +545,17 @@ Eigen::Matrix4f matchFeaturesRANSAC(pcl::PointCloud<pcl::PointNormal>::Ptr sourc
    std::cout<<"normal: \n"<<normalAcc<<std::endl;
    std::cout<<"centroid: \n"<<centroid<<std::endl;
    pcl::PointCloud<pcl::Normal>::Ptr average_normals (new pcl::PointCloud<pcl::Normal>);
-   pcl::Normal norm(normalAcc(0),normalAcc(1),normalAcc(2));
+   //pcl::Normal norm(normalAcc(0),normalAcc(1),normalAcc(2));
+   pcl::Normal norm(0.,0.,-1.);
    for (int ii = 0; ii < cloud->points.size(); ii++){
       average_normals->points.push_back(norm);   
    }
    normalsVis(simple_cloud,average_normals); 
- 
-  cv::Mat poop = imageFromCloudInDirection(simple_cloud,norm,.3);
-
+  
+  for (float theta = asin(normalAcc(1))-.2; theta <= asin(normalAcc(1))+.2; theta+=.1){
+     pcl::Normal norma(0.,sin(theta),-cos(theta));
+     cv::Mat poop = imageFromCloudInDirection(simple_cloud,norma,.3);
+  }
      // sample rectified rectangular cloud at regular intervals, interpolating
    // record hole locations
 
@@ -577,15 +580,17 @@ cv::Mat imageFromCloudInDirection(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl
    Eigen::Vector3f normalAcc(norm.normal_x,norm.normal_y,norm.normal_z);
    Eigen::Vector3f nz(0.,0.,1.);
    Eigen::Vector3f axis = normalAcc.cross(-nz);
+   std::cout<<"axis norm: "<<axis.norm()<<std::endl;
    float sintheta = axis.norm();
    std::cout<<"axis: "<<axis<<std::endl;
    Eigen::Affine3f xform = Eigen::Affine3f::Identity();
    //xform.translation()<< -centroid(0),-centroid(1),-centroid(2);
-   xform.rotate(Eigen::AngleAxisf(asin(sintheta),(1./sintheta)*axis));
+   if (sintheta != 0.)
+      xform.rotate(Eigen::AngleAxisf(asin(sintheta),(1./sintheta)*axis));
    pcl::PointCloud<pcl::PointXYZ>::Ptr flattenedCloud(new pcl::PointCloud<pcl::PointXYZ>);
    pcl::transformPointCloud(*cloud,*flattenedCloud,xform);
    pcl::PointCloud<pcl::Normal>::Ptr flattenedNormals = getNormals(flattenedCloud,1.);
-   normalsVisHeight(flattenedCloud,flattenedNormals);
+   //normalsVisHeight(flattenedCloud,flattenedNormals);
 
 // create bounding box
    float maxX = -1e23;
@@ -612,27 +617,97 @@ std::cout<< "maxX "<<maxX <<"\nminX "<<minX<<"\nmaxY "<<maxY<<"\nminY "<<minY<<"
    int idx2 = 0;
    std::cout<<"dx: "<<dX<<" dy: "<<dY<<std::endl;
 
-  for (float x = minX+.5*dX; x<maxX; x+=dX){
+  // create grid
+  pcl::PointCloud<pcl::PointXYZI>::Ptr grid (new pcl::PointCloud<pcl::PointXYZI>);
+  //populate grid
+  float marginpct = .15; // percent
+  float xmargin = (maxX-minX)*marginpct;
+  float ymargin = (maxY-minY)*marginpct;
+
+  for (float x = minX+xmargin+.5*dX; x<maxX-xmargin; x+=dX){
       idx2=0;
-      for( float y = minY+.5*dY; y<maxY; y+=dY){
+      for( float y = minY+ymargin+.5*dY; y<maxY-ymargin; y+=dY){
+         pcl::PointXYZI pt;
+         pt.x = x;
+         pt.y = y;
+         pt.z = 0.;
+         pt.intensity = -17.;
+         grid->points.push_back(pt);
          idx2++;
       }
       idx1++;
    }
    std::cout<< idx1 <<","<<idx2<<" of " <<imWidth<<","<<imHeight<<std::endl;
-   ImageAccumulator buffer(imHeight,imWidth);
-   std::cout<<"success\n";
-   for (int ii = 0; ii<flattenedCloud->points.size();ii++){
-      float x_p = flattenedCloud->points[ii].x;
-      float y_p = flattenedCloud->points[ii].y;
-      // interpolate to find xy indices
-      int ix = (int)floor(((x_p-minX)/(maxX-minX))/imWidth);
-      int iy = (int)floor(((y_p-minX)/(maxY-minY))/imHeight);
-      // add to accumulator
-      buffer.grid[iy][ix].Accumulate(flattenedCloud->points[ii].z-minZ);
-   }
+   // Big ol' hack to make range image
+   // abusing point clouds for search
+   pcl::PointCloud<pcl::PointXYZI>::Ptr buffer (new pcl::PointCloud<pcl::PointXYZI>);
 
+   for (int idx = 0; idx<flattenedCloud->points.size(); idx++){
+      pcl::PointXYZI proj;
+      proj.x = flattenedCloud->points[idx].x;
+      proj.y = flattenedCloud->points[idx].y;
+      proj.z = 0.;
+      proj.intensity = flattenedCloud->points[idx].z - minZ;
+      buffer->points.push_back(proj);
+   }
+/* ///////////////////////////////////////////////////////////////////////
+  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("buffer Viewer"));
+  viewer->setBackgroundColor (0, 0, 0);
+  pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointXYZI> intensity(buffer,"intensity");
+  viewer->addPointCloud<pcl::PointXYZI> (buffer,intensity,"flattened");
+  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "flattened");
+  viewer->addCoordinateSystem(10.0);
+  viewer->setCameraPosition(-190.,200.,-42.,0.,-40.,0.,0.,0.,-1.);
+  //viewer->initCameraParameters ();
+
+  while (!viewer->wasStopped ())
+  {
+    viewer->spinOnce (100);
+    boost::this_thread::sleep (boost::posix_time::microseconds (100000));
+  }
+
+ //////////////////////////////////////////////////////////////////////// */
       // sample rectified rectangular cloud at regular intervals, interpolating
+   pcl::KdTreeFLANN<pcl::PointXYZI> kdtree; 
+   kdtree.setInputCloud(buffer);
+   for (int ii = 0; ii<grid->points.size(); ii++){
+      // get all points within resolution radius
+      pcl::PointXYZI searchPoint = grid->points[ii];
+      int K = 4;
+      std::vector<int> pointIdxNKNSearch(K);
+      std::vector<float> pointNKNSquaredDistance(K);   
+      if ( kdtree.nearestKSearch (searchPoint, K, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
+      {   float pointCount = 0.;
+          for (size_t i = 0; i < pointIdxNKNSearch.size (); ++i){
+            // average points
+            if (pointNKNSquaredDistance[i] <= resolution){
+                grid->points[ii].intensity = (pointCount/(pointCount+1.))*grid->points[ii].intensity + (1./(pointCount+1.))*buffer->points[pointIdxNKNSearch[i] ].intensity;
+                pointCount += 1.;
+            }
+          } 
+      }
+
+   }
+/////////////////////////////////////////////////////////////////////////
+   // visualize organized cloud
+  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer2 (new pcl::visualization::PCLVisualizer ("buffer Viewer"));
+  viewer2->setBackgroundColor (0, 0, 0);
+  pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointXYZI> intensity2(grid,"intensity");
+  viewer2->addPointCloud<pcl::PointXYZI> (grid,intensity2,"flattened");
+  viewer2->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "flattened");
+  viewer2->addCoordinateSystem(10.0);
+  viewer2->setCameraPosition(5.,-42.,-160.,0.,-40.,0.,0.,-1.,0.);
+  //viewer->initCameraParameters ();
+
+  while (!viewer2->wasStopped ())
+  {
+    viewer2->spinOnce (100);
+    boost::this_thread::sleep (boost::posix_time::microseconds (100000));
+  }
+
+
+/////////////////////////////////////////////////////////////////////////
+  
    // record hole locations
 
    // fill in holes
@@ -645,3 +720,6 @@ std::cout<< "maxX "<<maxX <<"\nminX "<<minX<<"\nmaxY "<<maxY<<"\nminY "<<minY<<"
   cv::Mat output;
   return output;
 }
+
+
+
