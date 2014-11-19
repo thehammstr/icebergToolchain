@@ -166,14 +166,14 @@ def main(args):
    printScansToCSV(bigMama,beamHist,outfile=outfilePath+"state_and_ranges.csv")
 
 
-def cleanScan(scanInput,subsample = 4):
+def cleanScan(scanInput,subsample = 2):
     scan = scanInput[0:scanInput.shape[0]:subsample]
     #return cleaned scan and normals
     nScans,a = scan.shape
     # range jump threshold for declaring new regions
     threshold = 2.
     # number of returns in a given region needed to declare it good
-    nThresh = 20/subsample
+    nThresh = 5
     norms = np.zeros(nScans)
     norms[0]=np.linalg.norm(scan[0])
     regionLabel = 0

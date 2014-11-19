@@ -40,6 +40,27 @@ pcl::PointCloud<pcl::Normal>::Ptr getNormals(pcl::PointCloud<pcl::PointXYZ>::Ptr
   return cloud_normals;
 }
 
+pcl::Normal avgNormal(pcl::PointCloud<pcl::Normal>::Ptr normals){
+
+   Eigen::Vector3f normalAcc(0.,0.,0.);
+   float pointCounter = 0.;
+   for (int ii = 0; ii < normals->points.size(); ii++){
+            // check for valid normal
+      if ((isnan(normals->points[ii].normal[0]) || isnan(normals->points[ii].normal[1]) || isnan(normals->points[ii].normal[2])) ) {
+         // do nothing 
+      } else {
+         normalAcc(0) =  (pointCounter/(pointCounter+1.))*normalAcc(0) + (1./(pointCounter+1.))*normals->points[ii].normal[0];
+         normalAcc(1) =  (pointCounter/(pointCounter+1.))*normalAcc(1) + (1./(pointCounter+1.))*normals->points[ii].normal[1];
+         normalAcc(2) =  (pointCounter/(pointCounter+1.))*normalAcc(2) + (1./(pointCounter+1.))*normals->points[ii].normal[2];
+         pointCounter += 1.;
+      }
+
+   }
+   normalAcc.normalize();
+   std::cout<<"average normal: "<<normalAcc<<std::endl;
+   pcl::Normal normOut(normalAcc(0),normalAcc(1),normalAcc(2));
+   return normOut;
+}
 
 pcl::PointCloud<pcl::PointNormal>::Ptr addNormalsToCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointCloud<pcl::Normal>::Ptr normals)
 {
@@ -552,9 +573,13 @@ Eigen::Matrix4f matchFeaturesRANSAC(pcl::PointCloud<pcl::PointNormal>::Ptr sourc
    }
    normalsVis(simple_cloud,average_normals); 
   
+     cv::namedWindow("image2", CV_WINDOW_AUTOSIZE);
   for (float theta = asin(normalAcc(1))-.2; theta <= asin(normalAcc(1))+.2; theta+=.1){
      pcl::Normal norma(0.,sin(theta),-cos(theta));
-     cv::Mat poop = imageFromCloudInDirection(simple_cloud,norma,.3);
+     cv::Mat poop = imageFromCloudInDirection(simple_cloud,norma,.3,.1);
+     cv::imshow("image2", poop);
+     cv::waitKey(10.); 
+
   }
      // sample rectified rectangular cloud at regular intervals, interpolating
    // record hole locations
@@ -573,16 +598,13 @@ Eigen::Matrix4f matchFeaturesRANSAC(pcl::PointCloud<pcl::PointNormal>::Ptr sourc
 }
 
 
-cv::Mat imageFromCloudInDirection(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::Normal norm,float resolution){
+cv::Mat imageFromCloudInDirection(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::Normal norm,float resolution, float marginpct){
   
-   std::cout << "welcome to imageFromCloudInDirection\n"; 
 // rotate point cloud so z aligns with normal
    Eigen::Vector3f normalAcc(norm.normal_x,norm.normal_y,norm.normal_z);
    Eigen::Vector3f nz(0.,0.,1.);
    Eigen::Vector3f axis = normalAcc.cross(-nz);
-   std::cout<<"axis norm: "<<axis.norm()<<std::endl;
    float sintheta = axis.norm();
-   std::cout<<"axis: "<<axis<<std::endl;
    Eigen::Affine3f xform = Eigen::Affine3f::Identity();
    //xform.translation()<< -centroid(0),-centroid(1),-centroid(2);
    if (sintheta != 0.)
@@ -607,20 +629,18 @@ cv::Mat imageFromCloudInDirection(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl
       minY = std::min(minY,flattenedCloud->points[jj].y);
       minZ = std::min(minZ,flattenedCloud->points[jj].z);
    }
-std::cout<< "maxX "<<maxX <<"\nminX "<<minX<<"\nmaxY "<<maxY<<"\nminY "<<minY<<"\nmaxZ "<<maxZ<<"\nminZ "<<minZ<<std::endl;
-
+   // imWidth without margin
    int imWidth  = (int)ceil((maxX-minX)/resolution);
    int imHeight = (int)ceil((maxY-minY)/resolution);
    float dX = (maxX-minX)/imWidth;
    float dY = (maxY-minY)/imHeight;
    int idx1 = 0;
    int idx2 = 0;
-   std::cout<<"dx: "<<dX<<" dy: "<<dY<<std::endl;
 
   // create grid
   pcl::PointCloud<pcl::PointXYZI>::Ptr grid (new pcl::PointCloud<pcl::PointXYZI>);
   //populate grid
-  float marginpct = .15; // percent
+  //float marginpct = .15; // percent
   float xmargin = (maxX-minX)*marginpct;
   float ymargin = (maxY-minY)*marginpct;
 
@@ -637,7 +657,9 @@ std::cout<< "maxX "<<maxX <<"\nminX "<<minX<<"\nmaxY "<<maxY<<"\nminY "<<minY<<"
       }
       idx1++;
    }
-   std::cout<< idx1 <<","<<idx2<<" of " <<imWidth<<","<<imHeight<<std::endl;
+   //std::cout<< idx1 <<","<<idx2<<" of " <<imWidth<<","<<imHeight<<std::endl;
+   grid->height = idx2;
+   grid->width = idx1;
    // Big ol' hack to make range image
    // abusing point clouds for search
    pcl::PointCloud<pcl::PointXYZI>::Ptr buffer (new pcl::PointCloud<pcl::PointXYZI>);
@@ -690,6 +712,7 @@ std::cout<< "maxX "<<maxX <<"\nminX "<<minX<<"\nmaxY "<<maxY<<"\nminY "<<minY<<"
    }
 /////////////////////////////////////////////////////////////////////////
    // visualize organized cloud
+/*
   boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer2 (new pcl::visualization::PCLVisualizer ("buffer Viewer"));
   viewer2->setBackgroundColor (0, 0, 0);
   pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointXYZI> intensity2(grid,"intensity");
@@ -705,7 +728,7 @@ std::cout<< "maxX "<<maxX <<"\nminX "<<minX<<"\nmaxY "<<maxY<<"\nminY "<<minY<<"
     boost::this_thread::sleep (boost::posix_time::microseconds (100000));
   }
 
-
+*/
 /////////////////////////////////////////////////////////////////////////
   
    // record hole locations
@@ -717,9 +740,74 @@ std::cout<< "maxX "<<maxX <<"\nminX "<<minX<<"\nmaxY "<<maxY<<"\nminY "<<minY<<"
    // scale z? linearly? nonlinearly? 
 
 
-  cv::Mat output;
-  return output;
+  cv::Mat output = fillInRangeImageGaps(grid);
+  cv::Mat equalizedImage;
+  cv::equalizeHist(output,equalizedImage);
+
+#if(0)
+  cv::namedWindow("image", CV_WINDOW_AUTOSIZE);
+  cv::imshow("image", equalizedImage);
+  cv::waitKey(); 
+  //std::cout<<output<<std::endl;
+#endif
+  return equalizedImage;
+  //return output;
 }
 
 
+cv::Mat fillInRangeImageGaps(pcl::PointCloud<pcl::PointXYZI>::ConstPtr input){
+
+   // create output image
+   cv::Mat filledImage = cv::Mat::zeros(input->height,input->width,CV_32F);
+   cv::Mat bitMask = cv::Mat::zeros(input->height,input->width,CV_8U);
+   cv::Mat notMask = cv::Mat::ones(input->height,input->width,CV_8U);
+   int pclCounter = 0;
+   for (int jj = 0; jj < filledImage.cols; jj++){
+      for (int ii = 0; ii < filledImage.rows; ii++){
+        filledImage.at<float>(ii,jj) = (float)input->points[pclCounter].intensity;
+        if (input->points[pclCounter].intensity > 0.){
+            bitMask.at<unsigned char>(ii,jj) = 1;
+            notMask.at<unsigned char>(ii,jj) = 0;
+        }
+        pclCounter++;
+     }
+   }
+   
+   double tolerance = 1e-8;
+   cv::Size kernSize = cv::Size(11,11);
+   int maxLoop = 500;
+   cv::Mat inputImage = filledImage.clone();
+   double lastResid = 1000.;
+   int loopTracker = 0;
+   for( int iLoop = 0; iLoop < maxLoop; iLoop++){
+      // convolve working image with kernel
+      cv::Mat workingImage = cv::Mat::zeros(input->height,input->width,CV_32F);
+      cv::GaussianBlur(filledImage,workingImage,kernSize,20.);
+      // rebuild filledImage
+      cv::Mat accumulator = cv::Mat::zeros(input->height,input->width,CV_32F);
+      cv::accumulate(inputImage,accumulator,bitMask);
+      cv::accumulate(workingImage,accumulator,notMask);
+     double resid = cv::norm(accumulator,filledImage);
+     //if (resid < 1. || pow((lastResid - resid),2.)/(resid*resid+1e-12) < tolerance){
+     if (pow((lastResid - resid),2.)/(resid*resid+1e-12) < tolerance){
+          lastResid = resid;
+          break;
+     }
+     filledImage = accumulator.clone();
+     lastResid = resid;
+     loopTracker++;
+   }
+  std::cout<<"residual: "<<lastResid<<" # iterations: "<<loopTracker<<std::endl;
+  double min;
+  double max;
+  cv::minMaxIdx(filledImage,&min,&max);
+  cv::Mat scaledMap;
+  cv::convertScaleAbs(filledImage,scaledMap,255/max);
+  cv::Mat outputImage;
+  scaledMap.convertTo(outputImage,CV_8U);
+  return outputImage;
+
+
+
+}
 

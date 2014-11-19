@@ -6,9 +6,12 @@
 #include <pcl/range_image/range_image.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include "ImageAccumulator.h"
+#include "opencv2/imgproc/imgproc.hpp"
+
 
 pcl::PointCloud<pcl::Normal>::Ptr getNormals(pcl::PointCloud<pcl::PointXYZ>::Ptr,float);
+
+pcl::Normal avgNormal(pcl::PointCloud<pcl::Normal>::Ptr);
 
 pcl::PointCloud<pcl::PointNormal>::Ptr addNormalsToCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr, pcl::PointCloud<pcl::Normal>::Ptr);
 
@@ -43,9 +46,10 @@ boost::shared_ptr<pcl::RangeImage>
    buildRangeImageFromCloud(pcl::PointCloud< pcl::PointNormal >::Ptr);
 
 void buildNormalImageFromCloud(pcl::PointCloud< pcl::PointNormal >::Ptr);
-cv::Mat  imageFromCloudInDirection(pcl::PointCloud<pcl::PointXYZ>::Ptr , pcl::Normal,float);
 
+cv::Mat  imageFromCloudInDirection(pcl::PointCloud<pcl::PointXYZ>::Ptr , pcl::Normal,float,float);
 
+cv::Mat fillInRangeImageGaps(pcl::PointCloud<pcl::PointXYZI>::ConstPtr);
 
 
 #endif

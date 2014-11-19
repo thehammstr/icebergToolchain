@@ -126,11 +126,7 @@ int main (int argc, char **argv)
 			errflg++;
 		}
 
-
-        /* Set up output */
-        outFile = fopen(filename, mode);
-	fprintf(outFile, "time, latitude, longitude, depth, heading, speed, beam_x, beam_y, beam_z\n");
-
+       
 	/* get format if required */
 	if (format == 0)
 		mb_get_format(verbose,read_file,NULL,&format,&error);
@@ -164,6 +160,9 @@ int main (int argc, char **argv)
 	    strcpy(ifile, read_file);
 	    read_data = MB_YES;
 	    }
+        /* Set up output */
+        outFile = fopen(filename, mode);
+	fprintf(outFile, "time, latitude, longitude, depth, heading, speed, beam_x, beam_y, beam_z\n");
 
 	/* loop over all files to be read */
 	while (read_data == MB_YES)
