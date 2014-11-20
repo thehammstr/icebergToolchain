@@ -759,7 +759,9 @@ cv::Mat fillInRangeImageGaps(pcl::PointCloud<pcl::PointXYZI>::ConstPtr input){
 
    // create output image
    cv::Mat filledImage = cv::Mat::zeros(input->height,input->width,CV_32F);
-   cv::Mat bitMask = cv::Mat::zeros(input->height,input->width,CV_8U);
+   boost::shared_ptr< cv::Mat > bitMaskAdd (new cv::Mat(input->height,input->width,CV_8U));
+   cv::Mat bitMask = *bitMaskAdd;
+   bitMask = cv::Mat::zeros(input->height,input->width,CV_8U);
    cv::Mat notMask = cv::Mat::ones(input->height,input->width,CV_8U);
    int pclCounter = 0;
    for (int jj = 0; jj < filledImage.cols; jj++){
@@ -774,8 +776,8 @@ cv::Mat fillInRangeImageGaps(pcl::PointCloud<pcl::PointXYZI>::ConstPtr input){
    }
    
    double tolerance = 1e-8;
-   cv::Size kernSize = cv::Size(11,11);
-   int maxLoop = 500;
+   cv::Size kernSize = cv::Size(5,5);
+   int maxLoop = 10000;
    cv::Mat inputImage = filledImage.clone();
    double lastResid = 1000.;
    int loopTracker = 0;

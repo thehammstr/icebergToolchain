@@ -131,26 +131,33 @@ main (int argc, char** argv)
   std::cout<<"pitchmax,rollmax,stddev: "<<180./M_PI*pitchMax<<" | "<<180./M_PI*rollMax<<" | "<<maxDev1<<std::endl;
   // now extract and display features on best image
   // detecting keypoints
+  cv::Mat mask1;
+  cv::Mat mask2;
   cv::Mat bestimage1 = imageFromCloudInDirection(cloud1,bestNorm1,.5,.01);
   cv::Mat bestimage2 = imageFromCloudInDirection(cloud2,bestNorm2,.5,.1);
   int minHessian = 500; // 400 by default
-  cv::SurfFeatureDetector detector(minHessian);
+  //cv::SurfFeatureDetector detector(minHessian);
+  cv::ORB detector;
   std::vector<cv::KeyPoint> keypoints1;
   std::vector<cv::KeyPoint> keypoints2;
   cv::Mat blurredimage1;
   cv::Mat blurredimage2;
-  cv::blur(bestimage1,blurredimage1,cv::Size(7,7));
-  cv::blur(bestimage2,blurredimage2,cv::Size(7,7));
-  detector.detect(blurredimage1, keypoints1);
-  detector.detect(blurredimage2, keypoints2);
+  cv::blur(bestimage1,blurredimage1,cv::Size(11,11));
+  cv::blur(bestimage2,blurredimage2,cv::Size(11,11));
+  //detector.detect(blurredimage1, keypoints1);
+  //detector.detect(blurredimage2, keypoints2);
   // computing descriptors
-  cv::SurfDescriptorExtractor extractor;
+  //cv::SurfDescriptorExtractor extractor;
   cv::Mat descriptors1;
   cv::Mat descriptors2;
-  extractor.compute(bestimage1, keypoints1, descriptors1);
-  extractor.compute(bestimage2, keypoints2, descriptors2);
-  cv::FlannBasedMatcher matcher;
+  detector(blurredimage1,cv::Mat::ones(blurredimage1.rows,blurredimage1.cols,CV_8U),keypoints1,descriptors1);
+  detector(blurredimage2,cv::Mat::ones(blurredimage2.rows,blurredimage2.cols,CV_8U),keypoints2,descriptors2);
+  //extractor.compute(bestimage1, keypoints1, descriptors1);
+  //extractor.compute(bestimage2, keypoints2, descriptors2);
+  //cv::DescriptorMatcher matcher;
+  cv::BruteForceMatcher matcher(detector.defaultNorm(),false);
   std::vector< cv::DMatch > matches; 
+  //matcher.create("BruteForce-Hamming");
   matcher.match(descriptors1,descriptors2,matches);
   cv::Mat featureMatchImage;
   //cv::drawKeypoints(bestimage,keypoints1,featureImage);
