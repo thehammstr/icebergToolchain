@@ -6,7 +6,7 @@ SET(LOCALINCLUDE_DIR "../Generic" CACHE STRING "My include dir
 You may add additional search paths here. Use ; to separate multiple
 paths.") 
 
-find_package( OpenCV REQUIRED )
+find_package( OpenCV 2.4 REQUIRED )
 
 FIND_PACKAGE(Ceres REQUIRED )
 find_package(PCL 1.8 REQUIRED)

@@ -155,7 +155,7 @@ main (int argc, char** argv)
   //extractor.compute(bestimage1, keypoints1, descriptors1);
   //extractor.compute(bestimage2, keypoints2, descriptors2);
   //cv::DescriptorMatcher matcher;
-  cv::BruteForceMatcher matcher(detector.defaultNorm(),false);
+  cv::BFMatcher matcher;
   std::vector< cv::DMatch > matches; 
   //matcher.create("BruteForce-Hamming");
   matcher.match(descriptors1,descriptors2,matches);
