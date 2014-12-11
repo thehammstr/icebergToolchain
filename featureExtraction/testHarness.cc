@@ -32,17 +32,57 @@
 #include "cloudManipulation.h"
 #include <pcl/keypoints/harris_3d.h>
 #include <pcl/range_image/range_image.h>
+
 #include <opencv2/core/core.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 // MACROS
 
 DEFINE_string(input, "", "Input File name");
 
 
 using namespace std;
-
+using namespace cv;
 #if(1)
+
+
+static int crossCheckMatching( Ptr<DescriptorMatcher>& descriptorMatcher,
+                         const Mat& descriptors1, const Mat& descriptors2,
+                         vector<DMatch>& filteredMatches12, int knn=1 )
+{
+    filteredMatches12.clear();
+    vector<vector<DMatch> > matches12, matches21;
+    descriptorMatcher->knnMatch( descriptors1, descriptors2, matches12, knn );
+    descriptorMatcher->knnMatch( descriptors2, descriptors1, matches21, knn );
+    for( size_t m = 0; m < matches12.size(); m++ )
+    {
+        bool findCrossCheck = false;
+        for( size_t fk = 0; fk < matches12[m].size(); fk++ )
+        {
+            DMatch forward = matches12[m][fk];
+
+            for( size_t bk = 0; bk < matches21[forward.trainIdx].size(); bk++ )
+            {
+                DMatch backward = matches21[forward.trainIdx][bk];
+                if( backward.trainIdx == forward.queryIdx )
+                {
+                    filteredMatches12.push_back(forward);
+                    findCrossCheck = true;
+                    break;
+                }
+            }
+            if( findCrossCheck ) break;
+        }
+    }
+  return 1;
+}
+
+
+
+
+
 
 int
 main (int argc, char** argv)
@@ -134,34 +174,112 @@ main (int argc, char** argv)
   cv::Mat mask1;
   cv::Mat mask2;
   cv::Mat bestimage1 = imageFromCloudInDirection(cloud1,bestNorm1,.5,.01);
+  mask1 = imageFromCloudInDirection(cloud1,bestNorm1,.5,.01,true);
   cv::Mat bestimage2 = imageFromCloudInDirection(cloud2,bestNorm2,.5,.1);
-  int minHessian = 500; // 400 by default
-  //cv::SurfFeatureDetector detector(minHessian);
-  cv::ORB detector;
+  mask2 = imageFromCloudInDirection(cloud2,bestNorm2,.5,.1,true);
   std::vector<cv::KeyPoint> keypoints1;
   std::vector<cv::KeyPoint> keypoints2;
   cv::Mat blurredimage1;
   cv::Mat blurredimage2;
   cv::blur(bestimage1,blurredimage1,cv::Size(11,11));
   cv::blur(bestimage2,blurredimage2,cv::Size(11,11));
-  //detector.detect(blurredimage1, keypoints1);
-  //detector.detect(blurredimage2, keypoints2);
-  // computing descriptors
-  //cv::SurfDescriptorExtractor extractor;
-  cv::Mat descriptors1;
-  cv::Mat descriptors2;
-  detector(blurredimage1,cv::Mat::ones(blurredimage1.rows,blurredimage1.cols,CV_8U),keypoints1,descriptors1);
-  detector(blurredimage2,cv::Mat::ones(blurredimage2.rows,blurredimage2.cols,CV_8U),keypoints2,descriptors2);
-  //extractor.compute(bestimage1, keypoints1, descriptors1);
-  //extractor.compute(bestimage2, keypoints2, descriptors2);
-  //cv::DescriptorMatcher matcher;
-  cv::BFMatcher matcher;
-  std::vector< cv::DMatch > matches; 
-  //matcher.create("BruteForce-Hamming");
-  matcher.match(descriptors1,descriptors2,matches);
-  cv::Mat featureMatchImage;
+  // Parameters for shi tomasi detector
+  int maxCorners = 25;
+  double qualityLevel = 0.01;
+  double minDistance = 10;
+  int blockSize = 3;
+  bool useHarrisDetector = false;
+  double k = .04;
+  /// Draw corners detected
+  int r = 4; 
+  cv::imwrite("image1.png",blurredimage1);
+  cv::imwrite("image2.png",blurredimage2);
+  /***************************************************
+  
+      Feature extraction, detection, and matching 
+
+  ****************************************************/
+  //****************************************************
+  // Create objects
+  //****************************************************
+  cout << "< Creating detector, descriptor extractor and descriptor matcher ..." << endl;
+  cv::Ptr<cv::FeatureDetector> detector = cv::FeatureDetector::create( "GFTT" ); // shi-tomasi
+  std::string descriptorType = "ORB";
+  cv::Ptr<cv::DescriptorExtractor> descriptorExtractor = cv::DescriptorExtractor::create( descriptorType );
+  cv::Ptr<cv::DescriptorMatcher> descriptorMatcher = DescriptorMatcher::create( "BruteForce-Hamming" );
+  //****************************************************
+  // Run it 
+  //****************************************************
+    // image 1
+    std::cout << std::endl << "< Extracting keypoints from first image..." << std::endl;
+    detector->detect( blurredimage1, keypoints1 , mask1 );
+    cout << keypoints1.size() << " points" << endl << ">" << endl;
+    cout << "< Computing descriptors for keypoints from first image..." << endl;
+    cv::Mat descriptors1;
+    descriptorExtractor->compute( blurredimage1, keypoints1, descriptors1 );
+    cout << ">" << endl;
+    // image 2
+    cout << endl << "< Extracting keypoints from second image..." << endl;
+    detector->detect( blurredimage2, keypoints2, mask2 );
+    cout << keypoints2.size() << " points" << endl << ">" << endl;
+    cout << "< Computing descriptors for keypoints from second image..." << endl;
+    cv::Mat descriptors2;
+    descriptorExtractor->compute( blurredimage2, keypoints2, descriptors2 );
+    cout << ">" << endl;
+    // match
+    vector<DMatch> filteredMatches;
+    cv::Mat featureMatchImage;
+    crossCheckMatching( descriptorMatcher,descriptors1, descriptors2,filteredMatches);
+    // RANSAC
+    Mat H12;
+    double ransacReprojThreshold = 3.;
+    vector<int> queryIdxs( filteredMatches.size() ), trainIdxs( filteredMatches.size() );
+    for( size_t i = 0; i < filteredMatches.size(); i++ )
+    {
+        queryIdxs[i] = filteredMatches[i].queryIdx;
+        trainIdxs[i] = filteredMatches[i].trainIdx;
+    }
+    if( true) //!H12.empty() ) // filter outliers
+    {
+        vector<char> matchesMask( filteredMatches.size(), 0 );
+        vector<Point2f> points1; KeyPoint::convert(keypoints1, points1, queryIdxs);
+        vector<Point2f> points2; KeyPoint::convert(keypoints2, points2, trainIdxs);
+        H12 = findHomography( Mat(points1), Mat(points2), 0, ransacReprojThreshold ); 
+        cout << "homography matrix: \n"<<H12<<endl;
+        Mat points1t; perspectiveTransform(Mat(points1), points1t, H12);
+
+        double maxInlierDist = ransacReprojThreshold < 0 ? 3 : ransacReprojThreshold;
+        for( size_t i1 = 0; i1 < points1.size(); i1++ )
+        {
+            if( norm(points2[i1] - points1t.at<Point2f>((int)i1,0)) <= maxInlierDist ) // inlier
+                matchesMask[i1] = 1;
+        }
+        // draw inliers
+        //drawMatches( blurredimage1, keypoints1, blurredimage2, keypoints2, filteredMatches, 
+          //           featureMatchImage, Scalar(0, 255, 0), Scalar(255, 0, 0), matchesMask);
+        drawMatches( mask1, keypoints1, mask2, keypoints2, filteredMatches, 
+                     featureMatchImage, Scalar(0, 255, 0), Scalar(255, 0, 0), matchesMask);
+
+#if 0
+        // draw outliers
+        for( size_t i1 = 0; i1 < matchesMask.size(); i1++ )
+            matchesMask[i1] = !matchesMask[i1];
+        drawMatches( img1, keypoints1, img2, keypoints2, filteredMatches, drawImg, Scalar(255, 0, 0), Scalar(0, 0, 255), matchesMask,
+                     DrawMatchesFlags::DRAW_OVER_OUTIMG | DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
+#endif
+
+        cout << "Number of inliers: " << countNonZero(matchesMask) << endl;
+    }
+    else
+        drawMatches( blurredimage1, keypoints1, blurredimage2, keypoints2, filteredMatches, featureMatchImage );
+
+
+
+
+
+
   //cv::drawKeypoints(bestimage,keypoints1,featureImage);
-  cv::drawMatches(bestimage1,keypoints1,bestimage2,keypoints2,matches,featureMatchImage);
+  //cv::drawMatches(bestimage1,keypoints1,bestimage2,keypoints2,matches,featureMatchImage);
   cv::namedWindow("image3", CV_WINDOW_AUTOSIZE);
   cv::imshow("image3",featureMatchImage);
   // edge detection

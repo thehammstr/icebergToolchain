@@ -79,7 +79,7 @@ int main(int argc, char** argv)
 	std::cout << path.poses.size() << " poses." << std::endl;
 // update path with initial guess of bias
 	//path.updateWithConstBias(-.00012);
-	path.addConstBias(-.00002);
+	path.addConstBias(-.00002); // this is how you simulate that the ground is moving.
 /*-------------------------------------------------*/
 /*----------- Now do something with the data-------*/
 /*-------------------------------------------------*/
@@ -123,7 +123,7 @@ int main(int argc, char** argv)
         pcl::PointCloud<pcl::Normal>::Ptr normals1 = getNormals(subcloud1,scaleRadius);
         pcl::PointCloud<pcl::PointNormal>::Ptr subcloud1WithNormals = addNormalsToCloud(subcloud1,normals1);
         // view
-            for (int jOut = iOut+2*HalfWidth+9500; jOut < iOut+2*HalfWidth+10200;jOut+=HalfWidth){
+            for (int jOut = iOut+2*HalfWidth+8000; jOut < iOut+2*HalfWidth+12200;jOut+=HalfWidth){
              std::cout<<"iout, jout: "<<iOut<<" | "<<jOut<<std::endl; 
            //int jOut = iOut+HalfWidth;
                // extract comparison cloud

@@ -21,9 +21,9 @@ include_directories(${GFLAGS_INCLUDE})
 include_directories(${LOCALINCLUDE_DIR})
 
 # helloworld
-ADD_EXECUTABLE(extractFeatures extractFeaturesFromCleanedData.cc ../Generic/NodeDefinitions.cpp  cloudManipulation.cpp)
-ADD_EXECUTABLE(saveSubmap saveSubmapAsPCD.cc ../Generic/NodeDefinitions.cpp  cloudManipulation.cpp)
-ADD_EXECUTABLE(testHarness testHarness.cc ../Generic/NodeDefinitions.cpp  cloudManipulation.cpp )
+ADD_EXECUTABLE(extractFeatures extractFeaturesFromCleanedData.cc ../Generic/NodeDefinitions.cpp  ../Generic/cloudManipulation.cpp)
+ADD_EXECUTABLE(saveSubmap saveSubmapAsPCD.cc ../Generic/NodeDefinitions.cpp  ../Generic/cloudManipulation.cpp)
+ADD_EXECUTABLE(testHarness testHarness.cc ../Generic/NodeDefinitions.cpp  ../Generic/cloudManipulation.cpp )
 TARGET_LINK_LIBRARIES(extractFeatures ${CERES_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS} gflags)
 TARGET_LINK_LIBRARIES(saveSubmap ${CERES_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS} gflags)
 TARGET_LINK_LIBRARIES(testHarness ${CERES_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS} gflags)
