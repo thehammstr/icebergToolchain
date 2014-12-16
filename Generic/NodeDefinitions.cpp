@@ -333,21 +333,28 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr Trajectory::ExtractSubcloud(int idx1, int id
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr Trajectory::ExtractSubcloudAtAlt(int idx1, int idx2){
 
+
     pcl::PointCloud<pcl::PointXYZ>::Ptr basic_cloud_ptr (new pcl::PointCloud<pcl::PointXYZ>);
     pcl::PointCloud<pcl::PointXYZ>::Ptr featureCloud (new pcl::PointCloud<pcl::PointXYZ>);
 
+    if (idx2<=idx1){
+       std::cout<<"idx2 must be greater than idx1\n";
+      return featureCloud;
+    }
+
+
    for (int ii = idx1; ii<idx2; ii++){
 	pcl::PointXYZ basic_point;
-	basic_point.x = poses[ii].yEst();
-	basic_point.y = poses[ii].xEst();
-	basic_point.z = -poses[ii].zEst();	
+	basic_point.x = poses[ii].xEst();
+	basic_point.y = poses[ii].yEst();
+	basic_point.z = poses[ii].zEst();	
 	basic_cloud_ptr->points.push_back(basic_point);
 	for (int jj = 0; jj<poses[ii].measurements.size(); jj++){
 		FeatureNode feature_j(poses[ii],poses[ii].measurements[jj]);
 		pcl::PointXYZ featurePoint;
-		featurePoint.x = feature_j.state[1];
-		featurePoint.y = feature_j.state[0];
-		featurePoint.z = -feature_j.state[2];
+		featurePoint.x = feature_j.state[0];
+		featurePoint.y = feature_j.state[1];
+		featurePoint.z = feature_j.state[2];
 		featureCloud->points.push_back(featurePoint);
 		
 
@@ -369,8 +376,8 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr Trajectory::ExtractSubcloudAtAlt(int idx1, i
   // build transformation 
   Eigen::Affine3f xform2 = Eigen::Affine3f::Identity();
   // don't shift z
-  xform2.translation() << -poses[refIdx].yEst(), -poses[refIdx].xEst(), 0.;
-  std::cout<< poses[refIdx].yEst() << " " << poses[refIdx].xEst()<<" "<< -poses[refIdx].zEst()<<std::endl;
+  xform2.translation() << -poses[refIdx].xEst(), -poses[refIdx].yEst(), 0.;
+  //std::cout<< poses[refIdx].yEst() << " " << poses[refIdx].xEst()<<" "<< -poses[refIdx].zEst()<<std::endl;
   // do it
   pcl::transformPointCloud(*featureCloud,*shiftedFeatureCloud,xform2);
   // save it

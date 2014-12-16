@@ -228,6 +228,12 @@ FLANN_LIBRARY:FILEPATH=/usr/lib/libflann_cpp_s.a
 FLANN_LIBRARY_DEBUG:FILEPATH=/usr/lib/libflann_cpp_s.a
 
 //Path to a file.
+GFLAGS_INCLUDE:PATH=/usr/local/include/gflags
+
+//Path to a library.
+GFLAGS_LIB:FILEPATH=/usr/local/lib/libgflags.so
+
+//Path to a file.
 LIBUSB_1_INCLUDE_DIR:PATH=/usr/include
 
 //Path to a library.
@@ -244,6 +250,23 @@ OPENNI_INCLUDE_DIRS:PATH=/usr/include/openni
 
 //Path to a library.
 OPENNI_LIBRARY:FILEPATH=/usr/lib/libOpenNI.so
+
+//Path where debug 3rdpaty OpenCV dependencies are located
+OpenCV_3RDPARTY_LIB_DIR_DBG:PATH=
+
+//Path where release 3rdpaty OpenCV dependencies are located
+OpenCV_3RDPARTY_LIB_DIR_OPT:PATH=
+
+OpenCV_CONFIG_PATH:FILEPATH=/usr/local/share/OpenCV
+
+//The directory containing a CMake configuration file for OpenCV.
+OpenCV_DIR:PATH=/usr/local/share/OpenCV
+
+//Path where debug OpenCV libraries are located
+OpenCV_LIB_DIR_DBG:PATH=
+
+//Path where release OpenCV libraries are located
+OpenCV_LIB_DIR_OPT:PATH=
 
 //path to apps headers
 PCL_APPS_INCLUDE_DIR:PATH=/usr/include/pcl-1.7
@@ -1144,6 +1167,8 @@ CMAKE_C_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 CMAKE_DETERMINE_CXX_ABI_COMPILED:INTERNAL=TRUE
 //Result of TRY_COMPILE
 CMAKE_DETERMINE_C_ABI_COMPILED:INTERNAL=TRUE
+//Path to cache edit program executable.
+CMAKE_EDIT_COMMAND:INTERNAL=/usr/bin/ccmake
 //Executable file format
 CMAKE_EXECUTABLE_FORMAT:INTERNAL=ELF
 //ADVANCED property for variable: CMAKE_EXE_LINKER_FLAGS
@@ -1267,6 +1292,16 @@ FIND_PACKAGE_MESSAGE_DETAILS_libusb-1.0:INTERNAL=[/usr/include][v()]
 FIND_PACKAGE_MESSAGE_DETAILS_openni:INTERNAL=[/usr/lib/libOpenNI.so][/usr/include/openni][v()]
 //Details about finding qhull
 FIND_PACKAGE_MESSAGE_DETAILS_qhull:INTERNAL=[/usr/lib/libqhull.so][/usr/include/qhull][v()]
+//ADVANCED property for variable: OpenCV_3RDPARTY_LIB_DIR_DBG
+OpenCV_3RDPARTY_LIB_DIR_DBG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: OpenCV_3RDPARTY_LIB_DIR_OPT
+OpenCV_3RDPARTY_LIB_DIR_OPT-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: OpenCV_CONFIG_PATH
+OpenCV_CONFIG_PATH-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: OpenCV_LIB_DIR_DBG
+OpenCV_LIB_DIR_DBG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: OpenCV_LIB_DIR_OPT
+OpenCV_LIB_DIR_OPT-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: PCL_APPS_LIBRARY
 PCL_APPS_LIBRARY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: PCL_APPS_LIBRARY_DEBUG

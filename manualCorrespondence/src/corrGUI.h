@@ -14,6 +14,11 @@
 // Visualization Toolkit (VTK)
 #include <vtkRenderWindow.h>
 
+// Local stuff
+#include "CSVRow.h"
+#include "NodeDefinitions.h"
+#include "cloudManipulation.h"
+
 typedef pcl::PointXYZRGBA PointT;
 typedef pcl::PointCloud<PointT> PointCloudT;
 
@@ -30,9 +35,15 @@ public:
   explicit PCLViewer (QWidget *parent = 0);
   ~PCLViewer ();
 
+  void 
+  loadTrajectory( char *  ); 
+
 public slots:
   void
-  randomButtonPressed ();
+  writeButtonPressed ();
+
+  void
+  icpButtonPressed ();
 
   void
   RGBsliderReleased ();
@@ -51,11 +62,26 @@ public slots:
 
 protected:
   boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
+  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer2;
   PointCloudT::Ptr cloud;
-
-  unsigned int red;
-  unsigned int green;
-  unsigned int blue;
+  PointCloudT::Ptr trajectory;
+  PointCloudT::Ptr subcloud1;
+  PointCloudT::Ptr subcloud2;
+  PointCloudT::Ptr interestPoints;
+  PointCloudT::Ptr proposedLinks;
+  PointCloudT::Ptr recordedLinks;
+  Trajectory path;
+  int red;
+  int green;
+  int blue;
+  int idx1;
+  int rawSlider1;
+  int idx2;
+  int rawSlider2;
+  int halfwidth;
+  void updateLinkDisplay();
+  void renderSubClouds();
+  void updateTrajectory();
 
 private:
   Ui::PCLViewer *ui;
