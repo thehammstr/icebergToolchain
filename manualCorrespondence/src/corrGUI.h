@@ -10,7 +10,10 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/visualization/pcl_visualizer.h>
-
+#include <pcl/registration/icp.h>
+#include <pcl/registration/transformation_estimation_2D.h>
+#include <pcl/registration/correspondence_rejection_one_to_one.h>
+#include <pcl/kdtree/kdtree_flann.h>
 // Visualization Toolkit (VTK)
 #include <vtkRenderWindow.h>
 
@@ -67,9 +70,12 @@ protected:
   PointCloudT::Ptr trajectory;
   PointCloudT::Ptr subcloud1;
   PointCloudT::Ptr subcloud2;
+  PointCloudT::Ptr subcloud1a;
+  PointCloudT::Ptr subcloud2a;
   PointCloudT::Ptr interestPoints;
   PointCloudT::Ptr proposedLinks;
   PointCloudT::Ptr recordedLinks;
+  Eigen::Matrix4f Xform;
   Trajectory path;
   int red;
   int green;
@@ -79,10 +85,15 @@ protected:
   int idx2;
   int rawSlider2;
   int halfwidth;
+  bool icpHasBeenRun;
+  
   void updateLinkDisplay();
   void renderSubClouds();
   void updateTrajectory();
-
+  void showSubCloudExtents();
+  void runICP();
+  pcl::PointCloud<pcl::PointNormal>::Ptr 
+       addNorms(pcl::PointCloud<PointT>::Ptr,int);
 private:
   Ui::PCLViewer *ui;
 

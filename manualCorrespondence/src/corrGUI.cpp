@@ -2,6 +2,8 @@
 #include "../build/ui_corrGUI.h"
 #include <cloudManipulation.h>
 
+#define STRIDE 5
+
 PCLViewer::PCLViewer (QWidget *parent) :
   QMainWindow (parent),
   ui (new Ui::PCLViewer)
@@ -17,7 +19,10 @@ PCLViewer::PCLViewer (QWidget *parent) :
   recordedLinks.reset( new PointCloudT);
   subcloud1.reset( new PointCloudT);
   subcloud2.reset( new PointCloudT);
-
+  subcloud1a.reset( new PointCloudT);
+  subcloud2a.reset( new PointCloudT);
+  
+  Xform = Eigen::Matrix4f::Identity();
   // The number of points in the cloud
   cloud->points.resize (200);
   trajectory->points.resize(1000);
@@ -30,7 +35,7 @@ PCLViewer::PCLViewer (QWidget *parent) :
   idx1 = 500;
   idx2 = 10500;
   halfwidth = 100;
-
+  icpHasBeenRun = false;
   // Fill the cloud with some points
   for (size_t i = 0; i < cloud->points.size (); ++i)
   {
@@ -74,9 +79,13 @@ PCLViewer::PCLViewer (QWidget *parent) :
   viewer->addPointCloud (interestPoints,"interestPoints");
   viewer->addPointCloud (proposedLinks,"proposedLinks");
   viewer->addPointCloud (recordedLinks,"recordedLinks");
+  viewer->addPointCloud(subcloud1a,"subcloud1a");
+  viewer->addPointCloud(subcloud2a,"subcloud2a");
+  //showSubCloudExtents();
   viewer2->addPointCloud (subcloud1,"subcloud1");
   viewer2->addPointCloud (subcloud2,"subcloud2");
-  viewer->resetCamera ();
+  //viewer->resetCamera ();
+  viewer->setCameraPosition(2510.61, -1639.52, -3501.59,-0.825261, 0.0649858, -0.561001,0);
   viewer2->resetCamera ();
   ui->qvtkWidget->update ();
 }
@@ -114,7 +123,7 @@ PCLViewer::loadTrajectory( char * filename )
    }
     	std::cout << Nobs << " observations." << std::endl;
 	std::cout << path.poses.size() << " poses." << std::endl;
-  path.addConstBias(.00001);
+  path.addConstBias(.00004);
   // build trajectory
   updateTrajectory();
 
@@ -136,6 +145,9 @@ PCLViewer::updateTrajectory()
 {
   trajectory->points.resize(path.poses.size());
   cloud->clear();
+  unsigned char color = 0;
+  unsigned char brightness = 100;
+  unsigned long colorstep = ceil(path.poses.size()/brightness);
   for (int iT = 0; iT<path.poses.size(); iT ++)
   {
      trajectory->points[iT].x = path.poses[iT].xEst();
@@ -143,26 +155,30 @@ PCLViewer::updateTrajectory()
      trajectory->points[iT].z = path.poses[iT].zEst();
      trajectory->points[iT].r = 200;
      trajectory->points[iT].g = 00;
-     trajectory->points[iT].b = 00;
+     trajectory->points[iT].b = 200;
 
-     for (int jT = 0; jT < path.poses[iT].measurements.size(); jT += 5)
+     for (int jT = 0; jT < path.poses[iT].measurements.size(); jT += STRIDE)
      {
         FeatureNode feature_j (path.poses[iT],path.poses[iT].measurements[jT]);
         PointT featurePoint;
         featurePoint.x = feature_j.state[0];
         featurePoint.y = feature_j.state[1];
         featurePoint.z = feature_j.state[2];
-        featurePoint.r = 0;
-        featurePoint.g = 40;
-        featurePoint.b = 40;
+        
+        featurePoint.r = color;
+        featurePoint.g = brightness-(color%(brightness/2));
+        featurePoint.b = brightness-color;
         cloud->points.push_back(featurePoint);
 
      }
-
+     if(!(iT%colorstep))
+        color++;
   }
 
  return;
 }
+
+
 
 void
 PCLViewer::updateLinkDisplay()
@@ -185,8 +201,59 @@ PCLViewer::updateLinkDisplay()
 }
 
 void
+PCLViewer::showSubCloudExtents()
+{
+  // color subclouds in window 1
+  subcloud1a->clear();
+  for (int iT = idx1-halfwidth; iT<idx1+halfwidth; iT ++)
+  {
+    for (int jT = 0; jT < path.poses[iT].measurements.size(); jT += 5*STRIDE)
+     {
+        FeatureNode feature_j (path.poses[iT],path.poses[iT].measurements[jT]);
+        PointT featurePoint;
+        featurePoint.x = feature_j.state[0];
+        featurePoint.y = feature_j.state[1];
+        featurePoint.z = feature_j.state[2];
+        
+        featurePoint.r = 200;
+        featurePoint.g = 200;
+        featurePoint.b = 00;
+        subcloud1a->points.push_back(featurePoint);
+
+     }
+
+  }
+  subcloud2a->clear();
+  for (int iT = idx2-halfwidth; iT<idx2+halfwidth; iT ++)
+  {
+    for (int jT = 0; jT < path.poses[iT].measurements.size(); jT += 5*STRIDE)
+     {
+        FeatureNode feature_j (path.poses[iT],path.poses[iT].measurements[jT]);
+        PointT featurePoint;
+        featurePoint.x = feature_j.state[0];
+        featurePoint.y = feature_j.state[1];
+        featurePoint.z = feature_j.state[2];
+        
+        featurePoint.r = 200;
+        featurePoint.g = 00;
+        featurePoint.b = 00;
+        subcloud2a->points.push_back(featurePoint);
+
+     }
+
+  }
+
+  viewer->updatePointCloud(subcloud1a,"subcloud1a");
+  viewer->updatePointCloud(subcloud2a,"subcloud2a");
+  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "subcloud1a");
+  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "subcloud2a");
+
+}
+
+void
 PCLViewer::renderSubClouds()
 {
+  // create subclouds in window 2
   pcl::PointCloud<pcl::PointXYZ>::Ptr subSimpleCloud1;
   subSimpleCloud1 = path.ExtractSubcloudAtAlt(idx1-halfwidth,idx1+halfwidth); 
   subcloud1->points.resize(subSimpleCloud1->points.size());
@@ -212,7 +279,7 @@ PCLViewer::renderSubClouds()
   }
 
 
-
+  icpHasBeenRun = false;
 
   viewer2->updatePointCloud(subcloud1,"subcloud1");
   viewer2->updatePointCloud(subcloud2,"subcloud2");
@@ -225,6 +292,7 @@ void
 PCLViewer::writeButtonPressed ()
 {
   printf ("write button was pressed\n");
+  if (icpHasBeenRun){
   for (int ii = 0; ii<proposedLinks->points.size();ii++)
   {
      PointT goodpoint;
@@ -238,16 +306,89 @@ PCLViewer::writeButtonPressed ()
   }
   viewer->updatePointCloud (recordedLinks, "recordedLinks");
   ui->qvtkWidget->update ();
+
+  // RECORD Link INFO
+
+  } else {
+    std::cout<<"ICP has not been run!\n";
+  }
 }
+
+void
+PCLViewer::runICP()
+{
+  pcl::IterativeClosestPointWithNormals<pcl::PointNormal,pcl::PointNormal> icp;
+  //pcl::IterativeClosestPoint<PointT,PointT> icp;
+  pcl::registration::TransformationEstimation2D<pcl::PointNormal, pcl::PointNormal>::Ptr 
+        trans_2D (new pcl::registration::TransformationEstimation2D<pcl::PointNormal,pcl::PointNormal>);
+  icp.setTransformationEstimation (trans_2D);
+  pcl::registration::CorrespondenceRejectorOneToOne::Ptr one2one(new pcl::registration::CorrespondenceRejectorOneToOne);
+  icp.setUseReciprocalCorrespondences(false); // setting this to true resulted in slower and worse results. boo. why?
+  icp.setMaximumIterations(500);
+  icp.setMaxCorrespondenceDistance(150.);
+  std::cout << "max correspondence distance: "<< icp.getMaxCorrespondenceDistance() << std::endl;
+  icp.addCorrespondenceRejector(one2one);
+
+  // Need to make PointNormals out of XYZRGB
+  pcl::PointCloud<pcl::PointNormal>::Ptr subcloud1n = addNorms(subcloud1,5);
+  pcl::PointCloud<pcl::PointNormal>::Ptr subcloud2n = addNorms(subcloud2,5); 
+  // run icp
+  icp.setInputSource(subcloud2n);
+  icp.setInputTarget(subcloud1n);
+  pcl::PointCloud<pcl::PointNormal> Final;
+  icp.align(Final);
+
+  // put result back into submap
+  pcl::transformPointCloud(*subcloud2,*subcloud2,Xform);
+
+  std::cout << icp.getFinalTransformation() << std::endl;
+  Xform = icp.getFinalTransformation();
+  viewer2->updatePointCloud(subcloud1,"subcloud1");
+  viewer2->updatePointCloud(subcloud2,"subcloud2");
+  ui->qvtkWidget_2->update ();
+
+  icpHasBeenRun = true; 
+  return;
+}
+
+pcl::PointCloud<pcl::PointNormal>::Ptr 
+PCLViewer::addNorms(pcl::PointCloud<PointT>::Ptr const subcloud,int sparsity)
+{
+  double radius = 1.5;
+  pcl::NormalEstimation<PointT,pcl::Normal> ne;
+  ne.setInputCloud(subcloud);
+  // Create an empty kdtree representation, and pass it to the normal estimation object.
+  // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
+  pcl::search::KdTree<PointT>::Ptr tree (new pcl::search::KdTree<PointT> ());
+  ne.setSearchMethod (tree);
+  // Output datasets
+  pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
+  // Use all neighbors in a sphere of radius 
+  ne.setRadiusSearch (radius);
+  // Compute the features
+  ne.compute (*cloud_normals);
+  pcl::PointCloud<pcl::PointNormal>::Ptr output (new pcl::PointCloud<pcl::PointNormal>);
+  for (int ii = 0; ii<subcloud->points.size();ii+=sparsity)
+  {
+     pcl::PointNormal temp;
+     temp.x = subcloud->points[ii].x;
+     temp.y = subcloud->points[ii].y;
+     temp.z = subcloud->points[ii].z;
+     temp.normal_x = cloud_normals->points[ii].normal_x;
+     temp.normal_y = cloud_normals->points[ii].normal_y;
+     temp.normal_z = cloud_normals->points[ii].normal_z;
+     output->points.push_back(temp);
+  }
+
+  return output;
+}
+
 
 void
 PCLViewer::icpButtonPressed ()
 {
   printf ("ICP button was pressed\n");
-
-  
-  
-  ui->qvtkWidget->update ();
+  runICP();
 }
 
 
@@ -289,6 +430,7 @@ PCLViewer::redSliderValueChanged (int value)
     idx1 = idx2;
   //printf ("redSliderValueChanged: [%d|%d|%d]\n", red, green, blue);
   updateLinkDisplay();
+  showSubCloudExtents();
 }
 
 void
@@ -302,6 +444,7 @@ PCLViewer::greenSliderValueChanged (int value)
   if (idx2 >= path.poses.size() - halfwidth)
      idx2 = path.poses.size() - halfwidth -1;
   updateLinkDisplay();
+  showSubCloudExtents();
 }
 
 void
