@@ -2,7 +2,7 @@
 #define CORRGUI_H
 
 #include <iostream>
-
+#include <fstream>
 // Qt
 #include <QMainWindow>
 
@@ -46,6 +46,9 @@ public slots:
   writeButtonPressed ();
 
   void
+  deleteButtonPressed ();
+
+  void
   icpButtonPressed ();
 
   void
@@ -76,6 +79,7 @@ protected:
   PointCloudT::Ptr proposedLinks;
   PointCloudT::Ptr recordedLinks;
   Eigen::Matrix4f Xform;
+  std::vector<PoseLink> validLinks;
   Trajectory path;
   int red;
   int green;
@@ -94,6 +98,7 @@ protected:
   void runICP();
   pcl::PointCloud<pcl::PointNormal>::Ptr 
        addNorms(pcl::PointCloud<PointT>::Ptr,int);
+  void writeLinksToFile();
 private:
   Ui::PCLViewer *ui;
 

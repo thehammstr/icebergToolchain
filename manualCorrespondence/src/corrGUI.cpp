@@ -61,6 +61,7 @@ PCLViewer::PCLViewer (QWidget *parent) :
 
   // Connect "random" button and the function
   connect (ui->pushButton_write,  SIGNAL (clicked ()), this, SLOT (writeButtonPressed ()));
+  connect (ui->pushButton_delete, SIGNAL (clicked ()), this, SLOT (deleteButtonPressed ()));
   connect (ui->pushButton_ICP, SIGNAL (clicked ()), this, SLOT (icpButtonPressed ()));
   // Connect R,G,B sliders and their functions
   connect (ui->horizontalSlider_R, SIGNAL (valueChanged (int)), this, SLOT (redSliderValueChanged (int)));
@@ -147,7 +148,7 @@ PCLViewer::updateTrajectory()
   cloud->clear();
   unsigned char color = 0;
   unsigned char brightness = 100;
-  unsigned long colorstep = ceil(path.poses.size()/brightness);
+  unsigned long colorstep = ceil(path.poses.size()/brightness) + 1;
   for (int iT = 0; iT<path.poses.size(); iT ++)
   {
      trajectory->points[iT].x = path.poses[iT].xEst();
@@ -308,10 +309,61 @@ PCLViewer::writeButtonPressed ()
   ui->qvtkWidget->update ();
 
   // RECORD Link INFO
-
+  PoseLink link;
+  link.idx1 = idx1;
+  link.idx2 = idx2;
+  int poo = 0;
+  for (int iq = 0; iq < 4; iq++){
+    for ( int jq = 0; jq < 4; jq++){
+      link.Transform[poo] = Xform(iq,jq);
+      poo++;
+    }
+  }
+  validLinks.push_back(link);
+  writeLinksToFile();
   } else {
     std::cout<<"ICP has not been run!\n";
   }
+}
+
+void
+PCLViewer::writeLinksToFile()
+{
+  ofstream myfile;
+  myfile.open("../../DATA/Soquel20121031/recordedLinks.csv");
+  // print header
+  myfile << " idx1, idx2, Transformationmatrix (4x4, col major)\n";
+  // print data
+  for (int ii = 0; ii<validLinks.size(); ii++){
+    myfile << validLinks[ii].idx1 << "," << validLinks[ii].idx2 ;
+    for (int jj = 0; jj < 16; jj++){
+       myfile << ","<<validLinks[ii].Transform[jj];
+    }
+    myfile << std::endl;
+  }
+  myfile.close();
+ 
+  return;
+}
+void
+PCLViewer::deleteButtonPressed()
+{
+   printf ("delete button was pressed\n");
+
+   if (validLinks.size()>0){
+     // remove link depiction
+     for (int ii = 0; ii<proposedLinks->points.size();ii++)
+     {
+       recordedLinks->points.pop_back();
+     }
+     viewer->updatePointCloud (recordedLinks, "recordedLinks");
+     ui->qvtkWidget->update ();
+     validLinks.pop_back();
+     writeLinksToFile();
+   } else {
+     printf("nothing to delete\n");
+   }
+   return;
 }
 
 void

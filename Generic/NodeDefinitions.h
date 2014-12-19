@@ -12,6 +12,7 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/console/parse.h>
+#include <Eigen/StdVector>
 
 #define STATE_SIZE 4
 #define MAP_DIM 4
@@ -29,6 +30,17 @@
 #define _DVLX_ 10
 #define _DVLY_ 11
 #define _DVLZ_ 12
+
+typedef struct PoseLink_{
+  // x1 = Transform*x2;
+  int idx1;
+  int idx2;
+  double Transform[16];
+
+  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+} PoseLink;
 
 class ResonMeasurement {
   public:

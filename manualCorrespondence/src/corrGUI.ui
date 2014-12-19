@@ -333,6 +333,19 @@
      </rect>
     </property>
    </widget>
+   <widget class="QPushButton" name="pushButton_delete">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>410</y>
+      <width>101</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Delete Last</string>
+    </property>
+   </widget>
   </widget>
  </widget>
  <customwidgets>
