@@ -19,5 +19,5 @@ include_directories(${GFLAGS_INCLUDE})
 include_directories(${LOCALINCLUDE_DIR})
 
 # helloworld
-ADD_EXECUTABLE(solveIceberg solveIceberg.cc ../Generic/NodeDefinitions.cpp)
+ADD_EXECUTABLE(solveIceberg solveIcebergPosesOnly.cc ../Generic/NodeDefinitions.cpp)
 TARGET_LINK_LIBRARIES(solveIceberg ${CERES_LIBRARIES} ${PCL_LIBRARIES} gflags)

@@ -4,6 +4,18 @@
 #include <pcl/point_types.h>
 #include <pcl/common/transforms.h>
 #include <time.h>
+
+void
+PoseLink::loadLink(CSVRow row)
+{
+  idx1 = atoi(row[0].c_str());
+  idx2 = atoi(row[1].c_str());
+  for (int ii = 0; ii<16;ii++){
+    Transform[ii] = atof(row[ii+2].c_str());
+  }
+}
+
+
 ResonMeasurement::ResonMeasurement(int idx, double x,double y, double z, double n){
 	state[0] = x;
 	state[1] = y;
@@ -78,26 +90,35 @@ Trajectory::Trajectory(const std::vector<PoseNode> poses_in){
 
 bool Trajectory::PlotTrajectory(void){
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr basic_cloud_ptr (new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::PointCloud<pcl::PointXYZ>::Ptr featureCloud (new pcl::PointCloud<pcl::PointXYZ>);
-
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr basic_cloud_ptr (new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr featureCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+     unsigned char color = 0;
+     unsigned char brightness = 100;
+     unsigned long colorstep = ceil(poses.size()/brightness) + 1;
    for (int ii = 0; ii<poses.size(); ii++){
-	pcl::PointXYZ basic_point;
-	basic_point.x = poses[ii].yEst();
-	basic_point.y = poses[ii].xEst();
-	basic_point.z = -poses[ii].zEst();	
+	pcl::PointXYZRGB basic_point;
+	basic_point.x = poses[ii].xEst();
+	basic_point.y = poses[ii].yEst();
+	basic_point.z = poses[ii].zEst();
+	basic_point.r = 200;
+	basic_point.g = 00;
+	basic_point.b = 200;
 	basic_cloud_ptr->points.push_back(basic_point);
-	for (int jj = 0; jj<poses[ii].measurements.size(); jj++){
+	for (int jj = 0; jj<poses[ii].measurements.size(); jj+=5){
 		FeatureNode feature_j(poses[ii],poses[ii].measurements[jj]);
-		pcl::PointXYZ featurePoint;
-		featurePoint.x = feature_j.state[1];
-		featurePoint.y = feature_j.state[0];
-		featurePoint.z = -feature_j.state[2];
+		pcl::PointXYZRGB featurePoint;
+		featurePoint.x = feature_j.state[0];
+		featurePoint.y = feature_j.state[1];
+		featurePoint.z = feature_j.state[2];
+                featurePoint.r = color;
+                featurePoint.g = brightness-(color%(brightness/2));
+                featurePoint.b = brightness-color;
 		featureCloud->points.push_back(featurePoint);
 		
 
 	}
-
+       if( !(ii%colorstep))
+            color++;
 
     }
   basic_cloud_ptr->width = 1;
@@ -106,21 +127,27 @@ bool Trajectory::PlotTrajectory(void){
   featureCloud->height = featureCloud->points.size();  // --------------------------------------------
   // -----Open 3D viewer and add point cloud-----
   // --------------------------------------------
-  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
-  viewer->setBackgroundColor (0, 0, 0);
-  viewer->addPointCloud<pcl::PointXYZ> (basic_cloud_ptr, "trajectory");
-  viewer->addPointCloud<pcl::PointXYZ> (featureCloud, "features");
+  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("Viewer"));
+  //viewer->setBackgroundColor (0, 0, 0);
+pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(basic_cloud_ptr);
+  pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> featureColors(featureCloud);
+
+  viewer->addPointCloud<pcl::PointXYZRGB> (basic_cloud_ptr, rgb, "trajectory");
+  viewer->addPointCloud<pcl::PointXYZRGB> (featureCloud, featureColors, "features");
+
   viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "trajectory");
   viewer->addCoordinateSystem (1.0);
-  viewer->setCameraPosition(1312.78,565.839,1102.13,943.747,725.283,265.458, -0.828261,0.355559,0.433083);
-  viewer->setCameraFieldOfView(0.8575);
-  viewer->setCameraClipDistances(86.7214, 3962.83);
-  viewer->setPosition(66,52);
-  viewer->setSize(1280,512); 
+  viewer->resetCamera();
+  //viewer->setCameraPosition(211.61, -1478.52, -2093.59,-0.98675, -0.1545, -0.0561001,0);
+  //viewer->setCameraPosition(1312.78,565.839,1102.13,943.747,725.283,265.458, -0.828261,0.355559,0.433083);
+  //viewer->setCameraFieldOfView(0.8575);
+  //viewer->setCameraClipDistances(86.7214, 3962.83);
+  //viewer->setPosition(66,52);
+  //viewer->setSize(1280,512); 
   time_t startTime;
   startTime = time(NULL);
-  //while (!viewer->wasStopped () && time(NULL) - startTime < plotDuration)
-  while (!viewer->wasStopped ())
+  while (!viewer->wasStopped () && time(NULL) - startTime < plotDuration)
+  //while (!viewer->wasStopped ())
      {
        viewer->spinOnce (100);
        boost::this_thread::sleep (boost::posix_time::microseconds (100));
@@ -128,11 +155,53 @@ bool Trajectory::PlotTrajectory(void){
   //viewer->close();
 
   std::cout << "width: " << featureCloud->width << ", height:  "<< featureCloud->height<<std::endl;
-  pcl::io::savePCDFileASCII("output_traj.pcd",*basic_cloud_ptr);
-  pcl::io::savePCDFileASCII("output_cloud.pcd",*featureCloud);
+  //pcl::io::savePCDFileASCII("output_traj.pcd",*basic_cloud_ptr);
+  //pcl::io::savePCDFileASCII("output_cloud.pcd",*featureCloud);
 
   return true;
 }
+
+
+void
+Trajectory::saveTrajectoryToFile(char * filename)
+{
+   std::cout << "saving trajectory to " << filename << std::endl; 
+   std::ofstream file(filename);
+   file << "Format: time - x - y - z - phi - theta - psi - commanded speed - omega - dvl flag - dvl - measurements (scan number 4dof)\n";
+   for (int ii = 0; ii<poses.size(); ii++){
+      file << poses[ii].time       << "," <<
+              poses[ii].xEst()     << "," <<
+              poses[ii].yEst()     << "," <<
+              poses[ii].zEst()     << "," <<
+              poses[ii].phiEst()   << "," <<
+              poses[ii].thetaEst() << "," <<
+              poses[ii].psiEst()   << "," <<
+              1.5                  << "," <<  // commanded speed (not used)
+              poses[ii].inputs[0]  << "," <<  // omega z
+              1                    << "," <<  // dvl flag
+              poses[ii].DVL[0]     << "," <<
+              poses[ii].DVL[1]     << "," <<
+              poses[ii].DVL[2];
+      for (int jj = 0; jj<poses[ii].measurements.size(); jj+=5){
+          file <<  "," << poses[ii].measurements[jj].featureIndex <<
+                   "," << poses[ii].measurements[jj].mx()         <<
+                   "," << poses[ii].measurements[jj].my()         <<
+                   "," << poses[ii].measurements[jj].mz()         <<
+                   "," << poses[ii].measurements[jj].ni();
+      }
+      file << std::endl;
+   }
+   file.close();
+  /*try {
+    pcl::io::savePCDFileASCII("output_traj.pcd",*basic_cloud_ptr);
+    pcl::io::savePCDFileASCII("output_cloud.pcd",*featureCloud);
+  } 
+  catch {
+    std::cout<< "couldn't save pcd files\n" <<std::endl;
+  }*/
+
+}
+
 
 bool Trajectory::PlotProposedMatches(int idx1, int idx2, float disp_sec){
 
@@ -215,7 +284,7 @@ void Trajectory::updateWithConstBias(double bias){
 		double worldVel[3];
 		double AngleAxis[3];
 		double dT = poses[i].time - poses[i-1].time;
-		poses[i-1].inputs[0] += bias;
+		//poses[i-1].inputs[0] += bias;
 		poses[i-1].state[_B_] = bias;
 		poses[i].state[_PSI_] = poses[i-1].psiEst() + (poses[i-1].inputs[0] - poses[i-1].biasEst())*dT;
 		//poses[i].state[_PSI_] = poses[i-1].psiEst() + (poses[i-1].inputs[0] )*dT;
@@ -337,8 +406,8 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr Trajectory::ExtractSubcloudAtAlt(int idx1, i
     pcl::PointCloud<pcl::PointXYZ>::Ptr basic_cloud_ptr (new pcl::PointCloud<pcl::PointXYZ>);
     pcl::PointCloud<pcl::PointXYZ>::Ptr featureCloud (new pcl::PointCloud<pcl::PointXYZ>);
 
-    if (idx2<=idx1){
-       std::cout<<"idx2 must be greater than idx1\n";
+    if (idx2<=idx1 || idx1<0 || idx2<0 ||idx1>=poses.size() ||idx2>=poses.size()){
+       std::cout<<"idx2 must be greater than idx1 and both must be within range of poses\n";
       return featureCloud;
     }
 

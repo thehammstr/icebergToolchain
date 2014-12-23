@@ -332,7 +332,7 @@ PCLViewer::writeLinksToFile()
   ofstream myfile;
   myfile.open("../../DATA/Soquel20121031/recordedLinks.csv");
   // print header
-  myfile << " idx1, idx2, Transformationmatrix (4x4, col major)\n";
+  myfile << " idx1, idx2, Transformationmatrix (4x4, row major)\n";
   // print data
   for (int ii = 0; ii<validLinks.size(); ii++){
     myfile << validLinks[ii].idx1 << "," << validLinks[ii].idx2 ;

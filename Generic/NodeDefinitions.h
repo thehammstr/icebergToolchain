@@ -39,6 +39,7 @@ typedef struct PoseLink_{
 
   public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  void loadLink(CSVRow);
 
 } PoseLink;
 
@@ -92,6 +93,7 @@ class Trajectory{
 		Trajectory(std::vector<PoseNode> poses_in);
 		std::vector<PoseNode> poses;
 		bool PlotTrajectory(void);
+                void saveTrajectoryToFile(char * filename); 
                 bool PlotProposedMatches(int, int, float);
                 pcl::PointCloud<pcl::PointXYZ>::Ptr ExtractSubcloud(int, int);
                 pcl::PointCloud<pcl::PointXYZ>::Ptr ExtractSubcloudAtAlt(int,int);

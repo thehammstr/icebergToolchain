@@ -1,6 +1,6 @@
 #include "NodeDefinitions.h"
 #define BIG_NUMBER 1E10
-
+#define _ALFA_ 1.
 // NEED TO DEFINE NOISE MATRICES 
 
 struct OdometryError {
@@ -33,11 +33,11 @@ struct OdometryError {
 	residual[_X_] = 1.*Xres ;
 	residual[_Y_] = 1.*Yres ;
 	} else {
-	residual[_X_] = .1*Xres ;
-	residual[_Y_] = .1*Yres ;
+	residual[_X_] = 1.*Xres ;
+	residual[_Y_] = 1.*Yres ;
 	}
-	residual[_PSI_] = 100.*(poseEst2[_PSI_] - (poseEst1[_PSI_] + (T(pose1.inputs[0]) - poseEst1[_B_] )*T(dT)  ));
-	residual[_B_] = 100000.*(poseEst2[_B_] - poseEst1[_B_]);
+	residual[_PSI_] = 40.*(poseEst2[_PSI_] - (poseEst1[_PSI_] + (T(pose1.inputs[0]) - poseEst1[_B_] )*T(dT)  ));
+	residual[_B_] = .1*(poseEst2[_B_] - poseEst1[_B_]);
 
 	return true;
   }
@@ -53,6 +53,58 @@ struct OdometryError {
    PoseNode pose2;
 };
 
+/*----------------------------------------------------------------------------------------------------------------------------
+*/
+struct OdometryErrorAvgMotion {
+  OdometryErrorAvgMotion(PoseNode pose1, PoseNode pose2)
+	: pose1(pose1), pose2(pose2) {}
+
+  template <typename T>
+  bool operator()(const T* const poseEst1, const T* const poseEst2, const T* const avgMotion, T* residual) const { 
+	// Using the information in pose1 & pose 2 encode odometry error fxn
+	double dT = pose2.time - pose1.time;
+	T R[3][3];
+	T worldVel1[3];
+	T worldVel2[3];
+	T AngleAxis[3];
+	T Xres;
+	T Yres;
+	AngleAxis[0] = T(0.);
+	AngleAxis[1] = T(0.);
+	AngleAxis[2] = poseEst1[_PSI_];
+	T bodyVel[3];
+	bodyVel[0] = T(pose1.uEst());
+	bodyVel[1] = T(pose1.vEst());
+	bodyVel[2] = T(pose1.wEst());
+	ceres::AngleAxisRotatePoint(AngleAxis,bodyVel,worldVel1);
+	AngleAxis[2] = poseEst2[_PSI_];
+	ceres::AngleAxisRotatePoint(AngleAxis,bodyVel,worldVel2);
+	Xres = poseEst2[_X_] - (poseEst1[_X_] + (.5*worldVel1[0] + .5*worldVel2[0])*T(dT));
+	Yres = poseEst2[_Y_] - (poseEst1[_Y_] + (.5*worldVel1[1] + .5*worldVel2[1])*T(dT));
+	if (pose1.DVLflag){ // check for dvl lock
+	residual[_X_] = 1.*Xres ;
+	residual[_Y_] = 1.*Yres ;
+	} else {
+	residual[_X_] = 1.*Xres ;
+	residual[_Y_] = 1.*Yres ;
+	}
+	residual[_PSI_] = 40.*(poseEst2[_PSI_] - (poseEst1[_PSI_] + (T(pose1.inputs[0]) - avgMotion[0] )*T(dT)  ));
+	residual[_B_] = T(0.); //(poseEst2[_B_] - poseEst1[_B_]);
+
+	return true;
+  }
+   // Factory to hide the construction of the CostFunction object from
+   // the client code.
+   static ceres::CostFunction* Create(const PoseNode pose1,
+                                      const PoseNode pose2) {
+     return (new ceres::AutoDiffCostFunction<OdometryErrorAvgMotion, STATE_SIZE, STATE_SIZE, STATE_SIZE, 1>(
+                 new OdometryErrorAvgMotion(pose1, pose2)));
+   }
+
+   PoseNode pose1;
+   PoseNode pose2;
+};
+/* ---------------------------------------------------------------------------------------------------------------------*/
 
 struct MeasurementError {
   MeasurementError(PoseNode pose1, FeatureNode feature1, int measIdx1)
@@ -149,3 +201,78 @@ struct DVLError {
 
    PoseNode pose;
 };
+
+/*
+******************************************************************************
+******************************************************************************
+******************************************************************************
+******************************************************************************
+*/
+
+struct RegistrationError {
+  RegistrationError(PoseLink link12)
+	: link(link12) {}
+
+  template <typename T>
+  bool operator()(const T* const poseEst1, const T* const poseEst2, T* residual) const { 
+	// Using the information in pose1 & pose 2 encode odometry error fxn
+	T Xres;
+	T Yres;
+        T AngleAxis1toW[3];
+        T AngleAxisWto1[3]; 
+        T AngleAxis2toW[3]; 
+	AngleAxis1toW[0] = T(0.);
+	AngleAxis1toW[1] = T(0.);
+	AngleAxis1toW[2] = -poseEst1[_PSI_];
+      	AngleAxisWto1[0] = T(0.);
+	AngleAxisWto1[1] = T(0.);
+	AngleAxisWto1[2] = poseEst1[_PSI_];
+      	AngleAxis2toW[0] = T(0.);
+	AngleAxis2toW[1] = T(0.);
+	AngleAxis2toW[2] = poseEst2[_PSI_];
+        // translational residuals
+	T dXworld[3];
+        T dXbody1[3];
+	dXworld[0] = T(poseEst2[_X_] - poseEst1[_X_]);
+	dXworld[1] = T(poseEst2[_Y_] - poseEst1[_Y_]);
+	dXworld[2] = T(0.);
+	ceres::AngleAxisRotatePoint(AngleAxisWto1,dXworld,dXbody1);
+	Xres = dXbody1[0] - T(link.Transform[3]);
+	Yres = dXbody1[1] - T(link.Transform[7]);
+
+        // Rotational residuals
+        T x2Body2[3];
+        x2Body2[0] = T(1.);
+        T x2World[3];
+        T x2Body1[3];
+        T x2Link[3]; 
+        // rotate point 2's body-x vector into world
+        ceres::AngleAxisRotatePoint(AngleAxis2toW,x2Body2,x2World);
+        // then into frame 1
+        ceres::AngleAxisRotatePoint(AngleAxisWto1,x2World,x2Body1);
+        x2Link[0] = T(link.Transform[0]);
+        x2Link[1] = T(link.Transform[4]);
+        x2Link[2] = T(link.Transform[8]);
+	residual[_X_] = _ALFA_*Xres ;
+	residual[_Y_] = _ALFA_*Yres ;
+        // point of reference: .025rad = 1m error at 40m standoff distance
+        // essentially, the relative weight for PSI should be equal to the standoff distance in meters
+        // for 40m standoff distance, weight of PSI term = 40*weight of x term
+	residual[_PSI_] = 40.*_ALFA_*(x2Link[1] - x2Body1[1]);  // point of reference: .025rad = 1m error at 40m standoff distance
+        residual[_B_] = T(0.);
+	return true;
+  }
+   // Factory to hide the construction of the CostFunction object from
+   // the client code.
+   static ceres::CostFunction* Create(const PoseLink link12) {
+     return (new ceres::AutoDiffCostFunction<RegistrationError, STATE_SIZE, STATE_SIZE, STATE_SIZE>(
+                 new RegistrationError(link12)));
+   }
+
+   PoseLink link;
+};
+
+
+
+
+
