@@ -1,6 +1,6 @@
 #include "NodeDefinitions.h"
 #define BIG_NUMBER 1E10
-#define _ALFA_ 1.
+#define _ALFA_ .01
 // NEED TO DEFINE NOISE MATRICES 
 
 struct OdometryError {
@@ -36,8 +36,8 @@ struct OdometryError {
 	residual[_X_] = 1.*Xres ;
 	residual[_Y_] = 1.*Yres ;
 	}
-	residual[_PSI_] = 40.*(poseEst2[_PSI_] - (poseEst1[_PSI_] + (T(pose1.inputs[0]) - poseEst1[_B_] )*T(dT)  ));
-	residual[_B_] = .1*(poseEst2[_B_] - poseEst1[_B_]);
+	residual[_PSI_] = 1.*(poseEst2[_PSI_] - (poseEst1[_PSI_] + (T(pose1.inputs[0]) - poseEst1[_B_] )*T(dT)  ));
+	residual[_B_] = 1.*(poseEst2[_B_] - poseEst1[_B_]);
 
 	return true;
   }
@@ -229,7 +229,7 @@ struct RegistrationError {
 	AngleAxisWto1[2] = poseEst1[_PSI_];
       	AngleAxis2toW[0] = T(0.);
 	AngleAxis2toW[1] = T(0.);
-	AngleAxis2toW[2] = poseEst2[_PSI_];
+	AngleAxis2toW[2] = -poseEst2[_PSI_];
         // translational residuals
 	T dXworld[3];
         T dXbody1[3];
@@ -239,7 +239,9 @@ struct RegistrationError {
 	ceres::AngleAxisRotatePoint(AngleAxisWto1,dXworld,dXbody1);
 	Xres = dXbody1[0] - T(link.Transform[3]);
 	Yres = dXbody1[1] - T(link.Transform[7]);
-
+        //std::cout<< "Xres: " <<Xres<<std::endl;
+        //std::cout<< "Yres: " <<Yres<<std::endl;
+ 
         // Rotational residuals
         T x2Body2[3];
         x2Body2[0] = T(1.);
@@ -253,12 +255,13 @@ struct RegistrationError {
         x2Link[0] = T(link.Transform[0]);
         x2Link[1] = T(link.Transform[4]);
         x2Link[2] = T(link.Transform[8]);
-	residual[_X_] = _ALFA_*Xres ;
-	residual[_Y_] = _ALFA_*Yres ;
+	residual[_X_] = _ALFA_*Xres*Xres*Xres*Xres*Xres ;
+	residual[_Y_] = _ALFA_*Yres*Yres*Yres*Yres*Yres ;
         // point of reference: .025rad = 1m error at 40m standoff distance
         // essentially, the relative weight for PSI should be equal to the standoff distance in meters
         // for 40m standoff distance, weight of PSI term = 40*weight of x term
-	residual[_PSI_] = 40.*_ALFA_*(x2Link[1] - x2Body1[1]);  // point of reference: .025rad = 1m error at 40m standoff distance
+	//residual[_PSI_] = 40.*_ALFA_*(x2Link[1] - x2Body1[1]);  // point of reference: .025rad = 1m error at 40m standoff distance
+	residual[_PSI_] = 40.*_ALFA_*(x2Link[1] - x2Body1[1])*(x2Link[1] - x2Body1[1])*(x2Link[1] - x2Body1[1])*(x2Link[1] - x2Body1[1])*(x2Link[1] - x2Body1[1]);  // point of reference: .025rad = 1m error at 40m standoff distance
         residual[_B_] = T(0.);
 	return true;
   }

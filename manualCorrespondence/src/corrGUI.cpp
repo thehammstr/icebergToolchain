@@ -256,7 +256,8 @@ PCLViewer::renderSubClouds()
 {
   // create subclouds in window 2
   pcl::PointCloud<pcl::PointXYZ>::Ptr subSimpleCloud1;
-  subSimpleCloud1 = path.ExtractSubcloudAtAlt(idx1-halfwidth,idx1+halfwidth); 
+  //subSimpleCloud1 = path.ExtractSubcloudAtAlt(idx1-halfwidth,idx1+halfwidth); 
+  subSimpleCloud1 = path.ExtractSubcloud(idx1-halfwidth,idx1+halfwidth); 
   subcloud1->points.resize(subSimpleCloud1->points.size());
   for (int ii = 0; ii< subSimpleCloud1->points.size();ii++)
   {
@@ -266,9 +267,17 @@ PCLViewer::renderSubClouds()
     subcloud1->points[ii].r = 200;
     subcloud1->points[ii].g = 200;
   }
-
+  pcl::PointXYZRGBA origin;
+  origin.x = 0.;
+  origin.y = 0.;
+  origin.z = 0.;
+  origin.r = 0;
+  origin.g = 0;
+  origin.b = 255;
+  subcloud1->points.push_back(origin);
   pcl::PointCloud<pcl::PointXYZ>::Ptr subSimpleCloud2;
-  subSimpleCloud2 = path.ExtractSubcloudAtAlt(idx2-halfwidth,idx2+halfwidth); 
+  //subSimpleCloud2 = path.ExtractSubcloudAtAlt(idx2-halfwidth,idx2+halfwidth); 
+  subSimpleCloud2 = path.ExtractSubcloud(idx2-halfwidth,idx2+halfwidth); 
   subcloud2->points.resize(subSimpleCloud2->points.size());
   for (int ii = 0; ii< subSimpleCloud2->points.size();ii++)
   {
@@ -279,7 +288,8 @@ PCLViewer::renderSubClouds()
     subcloud2->points[ii].g = 00;
   }
 
-
+  origin.r = 255;
+  subcloud2->points.push_back(origin);
   icpHasBeenRun = false;
 
   viewer2->updatePointCloud(subcloud1,"subcloud1");
@@ -373,10 +383,10 @@ PCLViewer::runICP()
   //pcl::IterativeClosestPoint<PointT,PointT> icp;
   pcl::registration::TransformationEstimation2D<pcl::PointNormal, pcl::PointNormal>::Ptr 
         trans_2D (new pcl::registration::TransformationEstimation2D<pcl::PointNormal,pcl::PointNormal>);
-  icp.setTransformationEstimation (trans_2D);
+  //icp.setTransformationEstimation (trans_2D);
   pcl::registration::CorrespondenceRejectorOneToOne::Ptr one2one(new pcl::registration::CorrespondenceRejectorOneToOne);
   icp.setUseReciprocalCorrespondences(false); // setting this to true resulted in slower and worse results. boo. why?
-  icp.setMaximumIterations(500);
+  icp.setMaximumIterations(50);
   icp.setMaxCorrespondenceDistance(150.);
   std::cout << "max correspondence distance: "<< icp.getMaxCorrespondenceDistance() << std::endl;
   icp.addCorrespondenceRejector(one2one);

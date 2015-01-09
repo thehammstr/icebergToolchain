@@ -9,7 +9,8 @@ int main (int argc, char *argv[])
     return 0;
   }
   QApplication a (argc, argv);
-  PCLViewer w;
+  PCLViewer w; 
+  std::cout<<argv[1]<<std::endl;
   w.loadTrajectory(argv[1]);
   w.show ();
 

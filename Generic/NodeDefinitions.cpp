@@ -4,6 +4,7 @@
 #include <pcl/point_types.h>
 #include <pcl/common/transforms.h>
 #include <time.h>
+#include <math.h>
 
 void
 PoseLink::loadLink(CSVRow row)
@@ -92,6 +93,8 @@ bool Trajectory::PlotTrajectory(void){
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr basic_cloud_ptr (new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr featureCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr headingCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+
      unsigned char color = 0;
      unsigned char brightness = 100;
      unsigned long colorstep = ceil(poses.size()/brightness) + 1;
@@ -104,6 +107,21 @@ bool Trajectory::PlotTrajectory(void){
 	basic_point.g = 00;
 	basic_point.b = 200;
 	basic_cloud_ptr->points.push_back(basic_point);
+        // show heading vector
+        pcl::PointXYZRGB bodyX;
+        bodyX.x = cos(poses[ii].state[_PSI_]);
+        bodyX.y = sin(poses[ii].state[_PSI_]);
+        bodyX.z = 0.;
+        for (int poo = 0; poo<10;poo++){
+           pcl::PointXYZRGB dot;
+           dot.x = basic_point.x + double(poo)*.1*bodyX.x;
+           dot.y = basic_point.y + double(poo)*.1*bodyX.y;
+           dot.z = basic_point.z;
+           dot.r = 155;
+           dot.g = 0;
+           dot.b = 0;
+           headingCloud->points.push_back(dot);
+        }
 	for (int jj = 0; jj<poses[ii].measurements.size(); jj+=5){
 		FeatureNode feature_j(poses[ii],poses[ii].measurements[jj]);
 		pcl::PointXYZRGB featurePoint;
@@ -124,18 +142,24 @@ bool Trajectory::PlotTrajectory(void){
   basic_cloud_ptr->width = 1;
   basic_cloud_ptr->height = basic_cloud_ptr->points.size();
   featureCloud->width = 1;
-  featureCloud->height = featureCloud->points.size();  // --------------------------------------------
+  featureCloud->height = featureCloud->points.size();  
+  headingCloud->width = 1;
+  headingCloud->height = headingCloud->points.size(); 
+
+  // --------------------------------------------
   // -----Open 3D viewer and add point cloud-----
   // --------------------------------------------
   boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("Viewer"));
   //viewer->setBackgroundColor (0, 0, 0);
 pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(basic_cloud_ptr);
   pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> featureColors(featureCloud);
+  pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> headingColors(headingCloud);
 
   viewer->addPointCloud<pcl::PointXYZRGB> (basic_cloud_ptr, rgb, "trajectory");
   viewer->addPointCloud<pcl::PointXYZRGB> (featureCloud, featureColors, "features");
+  viewer->addPointCloud<pcl::PointXYZRGB> (headingCloud, headingColors, "headings");
 
-  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "trajectory");
+  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "trajectory");
   viewer->addCoordinateSystem (1.0);
   viewer->resetCamera();
   //viewer->setCameraPosition(211.61, -1478.52, -2093.59,-0.98675, -0.1545, -0.0561001,0);
@@ -146,7 +170,8 @@ pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(basic_c
   //viewer->setSize(1280,512); 
   time_t startTime;
   startTime = time(NULL);
-  while (!viewer->wasStopped () && time(NULL) - startTime < plotDuration)
+  while ( (!viewer->wasStopped () && time(NULL) - startTime < plotDuration) || 
+                  (!viewer->wasStopped () && plotDuration < 0.)  )
   //while (!viewer->wasStopped ())
      {
        viewer->spinOnce (100);
@@ -357,16 +382,16 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr Trajectory::ExtractSubcloud(int idx1, int id
 
    for (int ii = idx1; ii<idx2; ii++){
 	pcl::PointXYZ basic_point;
-	basic_point.x = poses[ii].yEst();
-	basic_point.y = poses[ii].xEst();
-	basic_point.z = -poses[ii].zEst();	
+	basic_point.x = poses[ii].xEst();
+	basic_point.y = poses[ii].yEst();
+	basic_point.z = poses[ii].zEst();	
 	basic_cloud_ptr->points.push_back(basic_point);
 	for (int jj = 0; jj<poses[ii].measurements.size(); jj++){
 		FeatureNode feature_j(poses[ii],poses[ii].measurements[jj]);
 		pcl::PointXYZ featurePoint;
-		featurePoint.x = feature_j.state[1];
-		featurePoint.y = feature_j.state[0];
-		featurePoint.z = -feature_j.state[2];
+		featurePoint.x = feature_j.state[0];
+		featurePoint.y = feature_j.state[1];
+		featurePoint.z = feature_j.state[2];
 		featureCloud->points.push_back(featurePoint);
 		
 
