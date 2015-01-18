@@ -96,6 +96,7 @@ protected:
   void updateTrajectory();
   void showSubCloudExtents();
   void runICP();
+  void runGridSearch();
   pcl::PointCloud<pcl::PointNormal>::Ptr 
        addNorms(pcl::PointCloud<PointT>::Ptr,int);
   void writeLinksToFile();

@@ -32,8 +32,8 @@ PCLViewer::PCLViewer (QWidget *parent) :
   red   = 128;
   green = 128;
   blue  = 128;
-  idx1 = 500;
-  idx2 = 10500;
+  idx1 = 200;
+  idx2 = 201;
   halfwidth = 100;
   icpHasBeenRun = false;
   // Fill the cloud with some points
@@ -256,8 +256,8 @@ PCLViewer::renderSubClouds()
 {
   // create subclouds in window 2
   pcl::PointCloud<pcl::PointXYZ>::Ptr subSimpleCloud1;
-  //subSimpleCloud1 = path.ExtractSubcloudAtAlt(idx1-halfwidth,idx1+halfwidth); 
-  subSimpleCloud1 = path.ExtractSubcloud(idx1-halfwidth,idx1+halfwidth); 
+  subSimpleCloud1 = path.ExtractSubcloudAtAlt(idx1-halfwidth,idx1+halfwidth); 
+  //subSimpleCloud1 = path.ExtractSubcloud(idx1-halfwidth,idx1+halfwidth); 
   subcloud1->points.resize(subSimpleCloud1->points.size());
   for (int ii = 0; ii< subSimpleCloud1->points.size();ii++)
   {
@@ -276,8 +276,8 @@ PCLViewer::renderSubClouds()
   origin.b = 255;
   subcloud1->points.push_back(origin);
   pcl::PointCloud<pcl::PointXYZ>::Ptr subSimpleCloud2;
-  //subSimpleCloud2 = path.ExtractSubcloudAtAlt(idx2-halfwidth,idx2+halfwidth); 
-  subSimpleCloud2 = path.ExtractSubcloud(idx2-halfwidth,idx2+halfwidth); 
+  subSimpleCloud2 = path.ExtractSubcloudAtAlt(idx2-halfwidth,idx2+halfwidth); 
+  //subSimpleCloud2 = path.ExtractSubcloud(idx2-halfwidth,idx2+halfwidth); 
   subcloud2->points.resize(subSimpleCloud2->points.size());
   for (int ii = 0; ii< subSimpleCloud2->points.size();ii++)
   {
@@ -291,6 +291,7 @@ PCLViewer::renderSubClouds()
   origin.r = 255;
   subcloud2->points.push_back(origin);
   icpHasBeenRun = false;
+  Xform = Eigen::Matrix4f::Identity();
 
   viewer2->updatePointCloud(subcloud1,"subcloud1");
   viewer2->updatePointCloud(subcloud2,"subcloud2");
@@ -328,6 +329,8 @@ PCLViewer::writeButtonPressed ()
       link.Transform[poo] = Xform(iq,jq);
       poo++;
     }
+    // add z offset
+    link.Transform[11] = path.poses[idx2].zEst() - path.poses[idx1].zEst();
   }
   validLinks.push_back(link);
   writeLinksToFile();
@@ -340,7 +343,8 @@ void
 PCLViewer::writeLinksToFile()
 {
   ofstream myfile;
-  myfile.open("../../DATA/Soquel20121031/recordedLinks.csv");
+  //myfile.open("../../DATA/Soquel20121031/recordedLinks.csv");
+  myfile.open("recordedLinks.csv");
   // print header
   myfile << " idx1, idx2, Transformationmatrix (4x4, row major)\n";
   // print data
@@ -383,11 +387,11 @@ PCLViewer::runICP()
   //pcl::IterativeClosestPoint<PointT,PointT> icp;
   pcl::registration::TransformationEstimation2D<pcl::PointNormal, pcl::PointNormal>::Ptr 
         trans_2D (new pcl::registration::TransformationEstimation2D<pcl::PointNormal,pcl::PointNormal>);
-  //icp.setTransformationEstimation (trans_2D);
+  icp.setTransformationEstimation (trans_2D);
   pcl::registration::CorrespondenceRejectorOneToOne::Ptr one2one(new pcl::registration::CorrespondenceRejectorOneToOne);
   icp.setUseReciprocalCorrespondences(false); // setting this to true resulted in slower and worse results. boo. why?
-  icp.setMaximumIterations(50);
-  icp.setMaxCorrespondenceDistance(150.);
+  icp.setMaximumIterations(150);
+  icp.setMaxCorrespondenceDistance(50.);
   std::cout << "max correspondence distance: "<< icp.getMaxCorrespondenceDistance() << std::endl;
   icp.addCorrespondenceRejector(one2one);
 
@@ -400,11 +404,13 @@ PCLViewer::runICP()
   pcl::PointCloud<pcl::PointNormal> Final;
   icp.align(Final);
 
+  Eigen::Matrix4f Tform = icp.getFinalTransformation();
+
   // put result back into submap
-  pcl::transformPointCloud(*subcloud2,*subcloud2,Xform);
+  pcl::transformPointCloud(*subcloud2,*subcloud2,Tform);
 
   std::cout << icp.getFinalTransformation() << std::endl;
-  Xform = icp.getFinalTransformation();
+  Xform = Tform*Xform;
   viewer2->updatePointCloud(subcloud1,"subcloud1");
   viewer2->updatePointCloud(subcloud2,"subcloud2");
   ui->qvtkWidget_2->update ();
@@ -412,6 +418,82 @@ PCLViewer::runICP()
   icpHasBeenRun = true; 
   return;
 }
+
+void
+PCLViewer::runGridSearch()
+{
+  double acceptableRad = 50.;
+  double psiRange = .15;
+  double xRange = 10.;
+  double yRange = 10.;
+  int nSamples_T = 11;
+  int nSamples_R = 11;
+  double xHat,yHat,pHat;
+  double bestCost = 1e8;
+  double bestX,bextY,bestPsi;
+
+  // working pointcloud   
+  PointCloudT::Ptr tempcloud;
+  tempcloud.reset(new PointCloudT);
+  std::vector<int> nn_i (1);
+  std::vector<float> nn_d (1);
+  std::vector<int> nn_indices(subcloud1->points.size(),-1);
+  std::vector<int> nn_dists(subcloud1->points.size());
+
+  for (int ip = 0; ip<nSamples_R; ip++){
+    pHat = -psiRange + 2.*(psiRange*(double)ip/((double)nSamples_R));
+    for (int iy = 0; iy< nSamples_T; iy++){
+      yHat = -yRange + 2.*(yRange*(double)iy/((double)nSamples_T));
+      for (int ix = 0; ix< nSamples_T; ix++){
+        xHat = -xRange + 2.*(xRange*(double)ix/((double)nSamples_T));
+        // build transform object
+        Eigen::Matrix4f Tform;
+        Tform << cos(pHat), sin(pHat), 0., xHat,
+                -sin(pHat), cos(pHat), 0., yHat,
+                    0.    ,      0.  , 1., 0.,
+                    0.    ,      0.  , 0., 1.;
+        std::cout<< "dx= "<<xHat<< " dy= "<<yHat<<" dpsi= "<< pHat<<std::endl;
+        // transform subcloud 2
+        pcl::transformPointCloud(*subcloud2,*tempcloud,Tform);
+        //----------------
+        pcl::KdTreeFLANN<PointT> tree;
+        tree.setInputCloud(subcloud1);
+        std::vector<int> nn_i (1);
+        std::vector<float> nn_d (1);
+        std::vector<int> nn_indices(subcloud1->points.size(),-1);
+        std::vector<int> nn_dists(subcloud1->points.size());
+        // find all matches
+        for (int idx = 0; idx<tempcloud->points.size(); idx++){
+          PointT query = tempcloud->points[idx];
+          int match = tree.nearestKSearch(query,1,nn_i,nn_d);
+          if (match == 1){
+             // record match if it's better than another index
+             if (nn_indices[nn_i[0]] == -1){
+                // first time seen
+                nn_indices[nn_i[0]] = idx;
+                nn_dists[nn_i[0]] = nn_d[0];
+             } else { // if this is closer than last one
+                if (nn_d[0] < nn_dists[nn_i[0]] ){
+                   nn_indices[nn_i[0]] = idx;
+                   nn_dists[nn_i[0]] = nn_d[0];
+                }
+             }
+          }
+        }
+        // calculate score
+        
+        // record score
+      }
+    } 
+  }
+  icpHasBeenRun = true; 
+  return;
+
+
+}
+
+
+
 
 pcl::PointCloud<pcl::PointNormal>::Ptr 
 PCLViewer::addNorms(pcl::PointCloud<PointT>::Ptr const subcloud,int sparsity)
@@ -451,6 +533,7 @@ PCLViewer::icpButtonPressed ()
 {
   printf ("ICP button was pressed\n");
   runICP();
+  //runGridSearch();
 }
 
 

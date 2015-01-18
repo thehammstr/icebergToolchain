@@ -54,7 +54,7 @@ int main(int argc, char** argv)
     // Logging stuff
     int Nobs = 0;
     int Nposes = 0;
-    int NposesToUse = 13000;
+    int NposesToUse = 230000;
     file >> row;
 	/*for (int jj=0;jj<row.size();++jj){
         std::cout << row[jj] << "\t";
@@ -88,7 +88,8 @@ int main(int argc, char** argv)
     }
 // update path with initial guess of bias
 	//path.updateWithConstBias(-.00012);
-//	path.addConstBias(.00002);
+    path.PlotTrajectory(Links);	
+	path.addConstBias(-.0007);
 /*-------------------------------------------------*/
 /*----------- Now do something with the data-------*/
 /*-------------------------------------------------*/
@@ -113,12 +114,12 @@ int main(int argc, char** argv)
     }
     std::cout<<uniqueCounter+1<<" unique features"<<std::endl;
     //boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
-    path.PlotTrajectory();	
+    path.PlotTrajectory(Links);	
     
   double bestAvgVel = 0.;
   double bestCost = 1e12;
   double biasguess = 1.;
-  for (float iSweep = 1.00004; iSweep < .00004; iSweep += .000001 ){
+  for (float iSweep = -.0009; iSweep < -.0006; iSweep += .00001 ){
     // initialize problem
     ceres::Problem constMotionProblem;
     ceres::Problem problem;
@@ -195,6 +196,7 @@ int main(int argc, char** argv)
 // Now actually run ceres
 
     path.updateWithConstBias(bestAvgVel); 
+        path.PlotTrajectory(Links);	
     // Anchor the origin
     // For each time t    
         ceres::Problem problem;
@@ -268,7 +270,7 @@ int main(int argc, char** argv)
          std::cout<<Links[0].Transform[pp]<<" ";
     std::cout<<std::endl;
 
-    path.PlotTrajectory();
+    path.PlotTrajectory(Links);
   
     ofstream outfile;
     outfile.open("output.csv");	 

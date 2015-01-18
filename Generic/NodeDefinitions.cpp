@@ -187,6 +187,142 @@ pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(basic_c
 }
 
 
+
+bool Trajectory::PlotTrajectory(std::vector<PoseLink> links){
+
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr basic_cloud_ptr (new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr featureCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr headingCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr linkCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+
+     unsigned char color = 0;
+     unsigned char brightness = 100;
+     unsigned long colorstep = ceil(poses.size()/brightness) + 1;
+   for (int ii = 0; ii<poses.size(); ii++){
+	pcl::PointXYZRGB basic_point;
+	basic_point.x = poses[ii].xEst();
+	basic_point.y = poses[ii].yEst();
+	basic_point.z = poses[ii].zEst();
+	basic_point.r = 200;
+	basic_point.g = 00;
+	basic_point.b = 200;
+	basic_cloud_ptr->points.push_back(basic_point);
+        // show heading vector
+        pcl::PointXYZRGB bodyX;
+        bodyX.x = cos(poses[ii].state[_PSI_]);
+        bodyX.y = sin(poses[ii].state[_PSI_]);
+        bodyX.z = 0.;
+        for (int poo = 0; poo<10;poo++){
+           pcl::PointXYZRGB dot;
+           dot.x = basic_point.x + double(poo)*.1*bodyX.x;
+           dot.y = basic_point.y + double(poo)*.1*bodyX.y;
+           dot.z = basic_point.z;
+           dot.r = 155;
+           dot.g = 0;
+           dot.b = 0;
+           headingCloud->points.push_back(dot);
+        }
+	for (int jj = 0; jj<poses[ii].measurements.size(); jj+=5){
+		FeatureNode feature_j(poses[ii],poses[ii].measurements[jj]);
+		pcl::PointXYZRGB featurePoint;
+		featurePoint.x = feature_j.state[0];
+		featurePoint.y = feature_j.state[1];
+		featurePoint.z = feature_j.state[2];
+                featurePoint.r = color;
+                featurePoint.g = brightness-(color%(brightness/2));
+                featurePoint.b = brightness-color;
+		featureCloud->points.push_back(featurePoint);
+		
+
+	}
+       if( !(ii%colorstep))
+            color++;
+
+    }
+  int LLine = 30;
+  for (int nn=0; nn<links.size(); nn++){
+     Eigen::Matrix3f m;
+     m = Eigen::AngleAxisf(poses[links[nn].idx1].psiEst(), Eigen::Vector3f::UnitZ());
+
+     Eigen::Vector3f bodyoffset;
+     Eigen::Vector3f worldoffset;
+     bodyoffset << links[nn].Transform[3] , links[nn].Transform[7] , poses[links[nn].idx2].zEst() - poses[links[nn].idx1].zEst();
+     std::cout << "body offset: "<< bodyoffset;
+     worldoffset = m*bodyoffset;
+     std::cout <<  ", world offset: " << worldoffset;
+     for (int qline=0; qline<LLine; qline++){
+        pcl::PointXYZRGB point;
+        point.x = poses[links[nn].idx1].xEst() + ((double)qline/(double)LLine)*(worldoffset(0)) ;
+	point.y = poses[links[nn].idx1].yEst() + ((double)qline/(double)LLine)*(worldoffset(1)) ;
+	point.z = poses[links[nn].idx1].zEst() + ((double)qline/(double)LLine)*(worldoffset(2)) ;
+	point.r = 00;
+	point.g = 250;
+	point.b = 00;
+	linkCloud->points.push_back(point);
+     }
+     pcl::PointXYZRGB target; 
+     target.x = poses[links[nn].idx2].xEst();
+     target.y = poses[links[nn].idx2].yEst();
+     target.z = poses[links[nn].idx2].zEst();
+     linkCloud->points.push_back(target);
+  }
+
+  basic_cloud_ptr->width = 1;
+  basic_cloud_ptr->height = basic_cloud_ptr->points.size();
+  featureCloud->width = 1;
+  featureCloud->height = featureCloud->points.size();  
+  headingCloud->width = 1;
+  headingCloud->height = headingCloud->points.size(); 
+  linkCloud->width = 1;
+  linkCloud->height = linkCloud->points.size();
+  // --------------------------------------------
+  // -----Open 3D viewer and add point cloud-----
+  // --------------------------------------------
+  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("Viewer"));
+  //viewer->setBackgroundColor (0, 0, 0);
+pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(basic_cloud_ptr);
+  pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> featureColors(featureCloud);
+  pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> headingColors(headingCloud);
+  pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> linkColors(linkCloud);
+
+  viewer->addPointCloud<pcl::PointXYZRGB> (basic_cloud_ptr, rgb, "trajectory");
+  viewer->addPointCloud<pcl::PointXYZRGB> (featureCloud, featureColors, "features");
+  viewer->addPointCloud<pcl::PointXYZRGB> (headingCloud, headingColors, "headings");
+  viewer->addPointCloud<pcl::PointXYZRGB> (linkCloud, linkColors, "links");
+
+  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "trajectory");
+  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "links");
+  viewer->addCoordinateSystem (1.0);
+  viewer->resetCamera();
+  //viewer->setCameraPosition(211.61, -1478.52, -2093.59,-0.98675, -0.1545, -0.0561001,0);
+  //viewer->setCameraPosition(1312.78,565.839,1102.13,943.747,725.283,265.458, -0.828261,0.355559,0.433083);
+  //viewer->setCameraFieldOfView(0.8575);
+  //viewer->setCameraClipDistances(86.7214, 3962.83);
+  //viewer->setPosition(66,52);
+  //viewer->setSize(1280,512); 
+  time_t startTime;
+  startTime = time(NULL);
+  while ( (!viewer->wasStopped () && time(NULL) - startTime < plotDuration) || 
+                  (!viewer->wasStopped () && plotDuration < 0.)  )
+  //while (!viewer->wasStopped ())
+     {
+       viewer->spinOnce (100);
+       boost::this_thread::sleep (boost::posix_time::microseconds (100));
+     }
+  //viewer->close();
+
+  //std::cout << "width: " << featureCloud->width << ", height:  "<< featureCloud->height<<std::endl;
+  //pcl::io::savePCDFileASCII("output_traj.pcd",*basic_cloud_ptr);
+  //pcl::io::savePCDFileASCII("output_cloud.pcd",*featureCloud);
+
+  return true;
+}
+
+
+
+
+
+
 void
 Trajectory::saveTrajectoryToFile(char * filename)
 {
@@ -330,7 +466,7 @@ void Trajectory::updateWithConstBias(double bias){
 }
 
 void Trajectory::addConstBias(double bias){
-// update path with initial guess of bias
+// rebuild with bias
 	for (int i = 1; i<poses.size(); i++){
 		double R[3][3];
 		double worldVel[3];
@@ -418,6 +554,10 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr Trajectory::ExtractSubcloud(int idx1, int id
   std::cout<< poses[refIdx].yEst() << " " << poses[refIdx].xEst()<<" "<< -poses[refIdx].zEst()<<std::endl;
   // do it
   pcl::transformPointCloud(*featureCloud,*shiftedFeatureCloud,xform2);
+  // and rotate
+  Eigen::Affine3f m;
+  m = Eigen::AngleAxisf(-poses[refIdx].psiEst(), Eigen::Vector3f::UnitZ()); 
+  pcl::transformPointCloud(*shiftedFeatureCloud,*shiftedFeatureCloud,m);
   // save it
   pcl::io::savePCDFileASCII("subcloud.pcd",*shiftedFeatureCloud);
 
@@ -474,6 +614,11 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr Trajectory::ExtractSubcloudAtAlt(int idx1, i
   //std::cout<< poses[refIdx].yEst() << " " << poses[refIdx].xEst()<<" "<< -poses[refIdx].zEst()<<std::endl;
   // do it
   pcl::transformPointCloud(*featureCloud,*shiftedFeatureCloud,xform2);
+  // and rotate
+   // and rotate
+  Eigen::Affine3f m;
+  m = Eigen::AngleAxisf(-poses[refIdx].psiEst(), Eigen::Vector3f::UnitZ()); 
+  pcl::transformPointCloud(*shiftedFeatureCloud,*shiftedFeatureCloud,m);
   // save it
   pcl::io::savePCDFileASCII("subcloud.pcd",*shiftedFeatureCloud);
 
