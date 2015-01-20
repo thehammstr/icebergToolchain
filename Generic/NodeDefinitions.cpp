@@ -14,6 +14,8 @@ PoseLink::loadLink(CSVRow row)
   for (int ii = 0; ii<16;ii++){
     Transform[ii] = atof(row[ii+2].c_str());
   }
+  t1 = 0.;
+  t2 = 10000.;
 }
 
 

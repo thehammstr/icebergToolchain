@@ -36,6 +36,8 @@ typedef struct PoseLink_{
   int idx1;
   int idx2;
   double Transform[16];
+  double t1;
+  double t2;
 
   public:
   void loadLink(CSVRow);

@@ -37,8 +37,8 @@ struct OdometryError {
 	residual[_X_] = 1.*Xres ;
 	residual[_Y_] = 1.*Yres ;
 	}
-	residual[_PSI_] = BIG_NUMBER*(poseEst2[_PSI_] - (poseEst1[_PSI_] + ( T(pose1.inputs[0]) - poseEst1[_B_] )*T(dT)  ));
-	residual[_B_] = BIG_NUMBER*(poseEst2[_B_] - poseEst1[_B_]);
+	residual[_PSI_] = 100.*(poseEst2[_PSI_] - (poseEst1[_PSI_] + ( T(pose1.inputs[0]) - poseEst1[_B_] )*T(dT)  ));
+	residual[_B_] =  T(1000.*(poseEst2[_B_] - poseEst1[_B_]));
 
 	return true;
   }
@@ -211,8 +211,8 @@ struct DVLError {
 */
 
 struct RegistrationError {
-  RegistrationError(PoseLink link12)
-	: link(link12) {}
+  RegistrationError(PoseLink link12, double RelWeight)
+	: link(link12), relWeight(RelWeight) {}
 
   template <typename T>
   bool operator()(const T* const poseEst1, const T* const poseEst2, T* residual) const { 
@@ -256,24 +256,27 @@ struct RegistrationError {
         x2Link[0] = T(link.Transform[0]);
         x2Link[1] = T(link.Transform[4]);
         x2Link[2] = T(link.Transform[8]);
-	residual[_X_] = _ALFA_*Xres ;
-	residual[_Y_] = _ALFA_*Yres ;
+	residual[_X_] = relWeight*Xres ;
+	residual[_Y_] = relWeight*Yres ;
+        T AvgMotion = (x2Link[1] - x2Body1[1])/(link.t2-link.t1);
         // point of reference: .025rad = 1m error at 40m standoff distance
         // essentially, the relative weight for PSI should be equal to the standoff distance in meters
         // for 40m standoff distance, weight of PSI term = 40*weight of x term
 	//residual[_PSI_] = 40.*_ALFA_*(x2Link[1] - x2Body1[1]);  // point of reference: .025rad = 1m error at 40m standoff distance
-	residual[_PSI_] = .0*_ALFA_*(x2Link[1] - x2Body1[1]);  // point of reference: .025rad = 1m error at 40m standoff distance
-        residual[_B_] = T(0.);
+	residual[_PSI_] = .0001*relWeight*(x2Link[1] - x2Body1[1]);  // point of reference: .025rad = 1m error at 40m standoff distance
+        residual[_B_] = 10.*relWeight*(AvgMotion + poseEst2[_B_]); 
+        residual[_B_+1] = 10.*relWeight*(AvgMotion + poseEst1[_B_]); //10000.0*relWeight*((x2Link[1] - x2Body1[1])/(link.t2-link.t1) + poseEst2[_B_]);
 	return true;
   }
    // Factory to hide the construction of the CostFunction object from
    // the client code.
-   static ceres::CostFunction* Create(const PoseLink link12) {
-     return (new ceres::AutoDiffCostFunction<RegistrationError, STATE_SIZE, STATE_SIZE, STATE_SIZE>(
-                 new RegistrationError(link12)));
+   static ceres::CostFunction* Create(const PoseLink link12, const double RelWeight) {
+     return (new ceres::AutoDiffCostFunction<RegistrationError, STATE_SIZE+1, STATE_SIZE, STATE_SIZE>(
+                 new RegistrationError(link12,RelWeight)));
    }
 
    PoseLink link;
+   double relWeight;
 };
 
 

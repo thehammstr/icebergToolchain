@@ -47,7 +47,7 @@ int main(int argc, char** argv)
     CSVRow              linkrow;
     Trajectory path;
     std::vector<PoseLink> Links;
-    path.plotDuration = 100000000.;
+    path.plotDuration = 10.;
     //std::vector<PoseNode> poses;
     std::vector<FeatureNode> features;
     std::vector<int> featureIndices;
@@ -80,6 +80,8 @@ int main(int argc, char** argv)
       PoseLink tempLink;
       tempLink.loadLink(linkrow);
       if (tempLink.idx1 < NposesToUse && tempLink.idx2 < NposesToUse){
+         tempLink.t1 = path.poses[tempLink.idx1].time;
+         tempLink.t2 = path.poses[tempLink.idx2].time;
          Links.push_back(tempLink);
       }
       std::cout<< "idx1: "<<tempLink.idx1<<", idx2: "<<tempLink.idx2;
@@ -89,7 +91,7 @@ int main(int argc, char** argv)
 // update path with initial guess of bias
 	//path.updateWithConstBias(-.00012);
     path.PlotTrajectory(Links);	
-	path.addConstBias(-.0007);
+	path.addConstBias(.0000);
 /*-------------------------------------------------*/
 /*----------- Now do something with the data-------*/
 /*-------------------------------------------------*/
@@ -119,15 +121,16 @@ int main(int argc, char** argv)
   double bestAvgVel = 0.;
   double bestCost = 1e12;
   double biasguess = 1.;
-  for (float iSweep = -.0009; iSweep < -.0006; iSweep += .00001 ){
+
+for (int jSweep = -80; jSweep < -90; jSweep ++ ){
+    float iSweep = float(jSweep)*0.00001;
     // initialize problem
-    ceres::Problem constMotionProblem;
     ceres::Problem problem;
     double avgMotion = 0.;
     path.updateWithConstBias(iSweep); 
     // Anchor the origin
     // For each time t
-    /*for (int ii = 1; ii<path.poses.size(); ii++){
+    for (int ii = 1; ii<path.poses.size(); ii++){
 	ceres::CostFunction* odometry_cost_function = 
 		OdometryError::Create(path.poses[ii-1],path.poses[ii]);
 	// each time has odometry link
@@ -136,25 +139,14 @@ int main(int argc, char** argv)
 					NULL,
 					path.poses[ii-1].state,
 					path.poses[ii].state);
-    }*/
-    
-    for (int ii = 1; ii<path.poses.size(); ii++){
-        
-	ceres::CostFunction* odometry_cost_function = 
-		OdometryErrorAvgMotion::Create(path.poses[ii-1],path.poses[ii]);
-	// each time has odometry link
-	//ceres::LossFunction* loss_fxn = new ceres::HuberLoss(10.0);
-	problem.AddResidualBlock(odometry_cost_function,
-					NULL,
-					path.poses[ii-1].state,
-					path.poses[ii].state,
-                                        &avgMotion);
     }
+    
     
     // add icp links
     for (int jj = 0; jj<Links.size(); jj++){
+        double relativeWeight = 10.;
         ceres::CostFunction* icp_cost_function = 
-                RegistrationError::Create(Links[jj]);
+                RegistrationError::Create(Links[jj],relativeWeight);
         ceres::LossFunction* loss_fxn = new ceres::HuberLoss(10.);
         problem.AddResidualBlock(icp_cost_function,
                                      loss_fxn,
@@ -174,16 +166,16 @@ int main(int argc, char** argv)
     options.linear_solver_type = ceres::ITERATIVE_SCHUR; //SPARSE_SCHUR;
     options.max_solver_time_in_seconds = 12800.;
     options.minimizer_progress_to_stdout = true;
-    options.max_num_iterations = 0;
+    options.max_num_iterations = 50;
     ceres::Solver::Summary summary;
     //for (int jj = 0; jj < actualMaxIter/options.max_num_iterations; jj++){
     	ceres::Solve(options, &problem, &summary);
     	//path.PlotTrajectory();
-        if (summary.initial_cost < bestCost){
-           bestCost = summary.initial_cost;
+        if (summary.final_cost < bestCost){
+           bestCost = summary.final_cost;
            bestAvgVel = iSweep;
         }
-        //std::cout << summary.FullReport() << "\n";
+        std::cout << summary.FullReport() << "\n";
         //std::cout<< " average motion: " << avgMotion <<std::endl;
 
   }
@@ -215,8 +207,9 @@ int main(int argc, char** argv)
     
     // add icp links
     for (int jj = 0; jj<Links.size(); jj++){
+        double relativeWeight = 1.;
         ceres::CostFunction* icp_cost_function = 
-                RegistrationError::Create(Links[jj]);
+                RegistrationError::Create(Links[jj],relativeWeight);
         ceres::LossFunction* loss_fxn = new ceres::HuberLoss(10.);
         problem.AddResidualBlock(icp_cost_function,
                                      loss_fxn,
@@ -274,8 +267,9 @@ int main(int argc, char** argv)
   
     ofstream outfile;
     outfile.open("output.csv");	 
-    //outfile << "x,y,z,u,v,w,phi,theta,psi,bias,"<<endl;
+    //outfile << "t,x,y,psi,bias,input1,input2"<<endl;
     for (int ii = 0 ; ii<path.poses.size();ii++){
+                outfile << path.poses[ii].time << ',';
 	for (int jj = 0; jj<STATE_SIZE; jj++){
 		outfile << path.poses[ii].state[jj] << ',';
 	}
