@@ -249,9 +249,9 @@ bool Trajectory::PlotTrajectory(std::vector<PoseLink> links){
      Eigen::Vector3f bodyoffset;
      Eigen::Vector3f worldoffset;
      bodyoffset << links[nn].Transform[3] , links[nn].Transform[7] , poses[links[nn].idx2].zEst() - poses[links[nn].idx1].zEst();
-     std::cout << "body offset: "<< bodyoffset;
+     //std::cout << "body offset: "<< bodyoffset;
      worldoffset = m*bodyoffset;
-     std::cout <<  ", world offset: " << worldoffset;
+     //std::cout <<  ", world offset: " << worldoffset;
      for (int qline=0; qline<LLine; qline++){
         pcl::PointXYZRGB point;
         point.x = poses[links[nn].idx1].xEst() + ((double)qline/(double)LLine)*(worldoffset(0)) ;

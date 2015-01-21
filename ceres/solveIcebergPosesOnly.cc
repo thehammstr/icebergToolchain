@@ -84,14 +84,14 @@ int main(int argc, char** argv)
          tempLink.t2 = path.poses[tempLink.idx2].time;
          Links.push_back(tempLink);
       }
-      std::cout<< "idx1: "<<tempLink.idx1<<", idx2: "<<tempLink.idx2;
+      std::cout<< "idx1: "<<tempLink.idx1<<", idx2: "<<tempLink.idx2 << " " <<tempLink.t1 << " " << tempLink.t2;
       std::cout<<std::endl;
 
     }
 // update path with initial guess of bias
 	//path.updateWithConstBias(-.00012);
     path.PlotTrajectory(Links);	
-	path.addConstBias(.0000);
+	path.addConstBias(.0001);
 /*-------------------------------------------------*/
 /*----------- Now do something with the data-------*/
 /*-------------------------------------------------*/
