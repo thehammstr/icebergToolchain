@@ -92,13 +92,13 @@ main (int argc, char** argv)
 
   //if (pcl::io::loadPCDFile<pcl::PointXYZ> ("subcloudWithNormals.pcd", *cloud) == -1) //* load the file
   //if (pcl::io::loadPCDFile<pcl::PointXYZ> ("AfirstPass1600.pcd", *cloud1) == -1) //* load the file
-  if (pcl::io::loadPCDFile<pcl::PointXYZ> ("firstPass.pcd", *cloud1) == -1) //* load the file
+  if (pcl::io::loadPCDFile<pcl::PointXYZ> ("../data/firstPass.pcd", *cloud1) == -1) //* load the file
   {
     PCL_ERROR ("Couldn't read file test_pcd.pcd \n");
     return (-1);
   }
    //if (pcl::io::loadPCDFile<pcl::PointXYZ> ("AsecondPass11500.pcd", *cloud2) == -1) //* load the file
-   if (pcl::io::loadPCDFile<pcl::PointXYZ> ("secondPass.pcd", *cloud2) == -1) //* load the file
+   if (pcl::io::loadPCDFile<pcl::PointXYZ> ("../data/secondPass.pcd", *cloud2) == -1) //* load the file
   {
     PCL_ERROR ("Couldn't read file test_pcd.pcd \n");
     return (-1);

@@ -183,7 +183,7 @@ pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(basic_c
 
   std::cout << "width: " << featureCloud->width << ", height:  "<< featureCloud->height<<std::endl;
   //pcl::io::savePCDFileASCII("output_traj.pcd",*basic_cloud_ptr);
-  //pcl::io::savePCDFileASCII("output_cloud.pcd",*featureCloud);
+  pcl::io::savePCDFileASCII("output_cloud.pcd",*featureCloud);
 
   return true;
 }
@@ -313,9 +313,9 @@ pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(basic_c
      }
   //viewer->close();
 
-  //std::cout << "width: " << featureCloud->width << ", height:  "<< featureCloud->height<<std::endl;
+  std::cout << "width: " << featureCloud->width << ", height:  "<< featureCloud->height<<std::endl;
   //pcl::io::savePCDFileASCII("output_traj.pcd",*basic_cloud_ptr);
-  //pcl::io::savePCDFileASCII("output_cloud.pcd",*featureCloud);
+  pcl::io::savePCDFileASCII("output_cloud.pcd",*featureCloud);
 
   return true;
 }
@@ -515,8 +515,16 @@ FeatureNode::FeatureNode(PoseNode Pose, ResonMeasurement Meas){
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr Trajectory::ExtractSubcloud(int idx1, int idx2){
 
+
+
     pcl::PointCloud<pcl::PointXYZ>::Ptr basic_cloud_ptr (new pcl::PointCloud<pcl::PointXYZ>);
     pcl::PointCloud<pcl::PointXYZ>::Ptr featureCloud (new pcl::PointCloud<pcl::PointXYZ>);
+
+    if (idx2<=idx1 || idx1<0 || idx2<0 ||idx1>=poses.size() ||idx2>=poses.size()){
+       std::cout<<"idx2 must be greater than idx1 and both must be within range of poses\n";
+      return featureCloud;
+    }
+
 
    for (int ii = idx1; ii<idx2; ii++){
 	pcl::PointXYZ basic_point;
@@ -550,20 +558,21 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr Trajectory::ExtractSubcloud(int idx1, int id
   int refIdx = idx1 + (idx2-idx1)/2;
   // build transformation 
   Eigen::Affine3f xform2 = Eigen::Affine3f::Identity();
-  xform2.translation() << -poses[refIdx].yEst(), -poses[refIdx].xEst(), poses[refIdx].zEst();
   // don't shift z
-  //xform2.translation() << -poses[refIdx].yEst(), -poses[refIdx].xEst(), 0.;
-  std::cout<< poses[refIdx].yEst() << " " << poses[refIdx].xEst()<<" "<< -poses[refIdx].zEst()<<std::endl;
+  xform2.translation() << -poses[refIdx].xEst(), -poses[refIdx].yEst(), -poses[refIdx].zEst();
+  //std::cout<< poses[refIdx].yEst() << " " << poses[refIdx].xEst()<<" "<< -poses[refIdx].zEst()<<std::endl;
   // do it
   pcl::transformPointCloud(*featureCloud,*shiftedFeatureCloud,xform2);
   // and rotate
+   // and rotate
   Eigen::Affine3f m;
   m = Eigen::AngleAxisf(-poses[refIdx].psiEst(), Eigen::Vector3f::UnitZ()); 
   pcl::transformPointCloud(*shiftedFeatureCloud,*shiftedFeatureCloud,m);
   // save it
-  pcl::io::savePCDFileASCII("subcloud.pcd",*shiftedFeatureCloud);
+  //pcl::io::savePCDFileASCII("subcloud.pcd",*shiftedFeatureCloud);
 
   return shiftedFeatureCloud;
+
 }
 
 

@@ -79,7 +79,7 @@ int main(int argc, char** argv)
 	std::cout << path.poses.size() << " poses." << std::endl;
 // update path with initial guess of bias
 	//path.updateWithConstBias(-.00012);
-	path.addConstBias(-.00002); // this is how you simulate that the ground is moving.
+	path.addConstBias(-.00002);
 /*-------------------------------------------------*/
 /*----------- Now do something with the data-------*/
 /*-------------------------------------------------*/
@@ -105,7 +105,7 @@ int main(int argc, char** argv)
     std::cout<<uniqueCounter+1<<" unique features"<<std::endl;
     //boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
     //path.PlotTrajectory();	
-    int HalfWidth = 200;
+    int HalfWidth = 100;
 
     //for (int iOut = 1000 + HalfWidth; iOut < 3000-HalfWidth; iOut+=2*HalfWidth){
     std::vector<Eigen::Vector3d> matchMetric;
@@ -115,7 +115,7 @@ int main(int argc, char** argv)
     for (int iOut = 1500 + HalfWidth; iOut < 20000-HalfWidth; iOut+=2*HalfWidth){
         // Extract reference pointcloud
         pcl::PointCloud<pcl::PointXYZ>::Ptr subcloud1;
-        subcloud1 = path.ExtractSubcloud(iOut - HalfWidth,iOut+HalfWidth);
+        subcloud1 = path.ExtractSubcloudAtAlt(iOut - HalfWidth,iOut+HalfWidth);
         // calculate normals
         float scaleRadius = 1.0;
         float harrisRadius = 2.;
@@ -123,26 +123,59 @@ int main(int argc, char** argv)
         pcl::PointCloud<pcl::Normal>::Ptr normals1 = getNormals(subcloud1,scaleRadius);
         pcl::PointCloud<pcl::PointNormal>::Ptr subcloud1WithNormals = addNormalsToCloud(subcloud1,normals1);
         // view
-            for (int jOut = iOut+2*HalfWidth+8000; jOut < iOut+2*HalfWidth+12200;jOut+=HalfWidth){
-             std::cout<<"iout, jout: "<<iOut<<" | "<<jOut<<std::endl; 
+        //normalsVis(subcloud1,normals1); 
+        // Extract Features from said pointcloud
+        pcl::PointCloud<pcl::PointXYZ>::Ptr Harris1 = findHarrisCorners(subcloud1,normals1,harrisRadius,harrisThresh);
+        // build descriptors of keypoints
+        pcl::PointCloud<pcl::FPFHSignature33>::Ptr descriptors1 = calculateFPFHDescriptors(Harris1,subcloud1,normals1,scaleRadius);
+        //for (int jOut = iOut+2*HalfWidth+10000; jOut < path.poses.size()-HalfWidth;jOut+=2*HalfWidth){
+        for (int jOut = iOut+2*HalfWidth+9500; jOut < iOut+2*HalfWidth+10200;jOut+=HalfWidth){
+           
            //int jOut = iOut+HalfWidth;
                // extract comparison cloud
-             pcl::PointCloud<pcl::PointXYZ>::Ptr subcloud2;
-             subcloud2 = path.ExtractSubcloud(jOut - HalfWidth,jOut+HalfWidth);
-             // normals
-             pcl::PointCloud<pcl::Normal>::Ptr normals2 = getNormals(subcloud2,scaleRadius);
-             pcl::PointCloud<pcl::PointNormal>::Ptr subcloud2WithNormals = addNormalsToCloud(subcloud2,normals2);
-             if (VIEW_SPINNING_CLOUD){
+           pcl::PointCloud<pcl::PointXYZ>::Ptr subcloud2;
+           subcloud2 = path.ExtractSubcloudAtAlt(jOut - HalfWidth,jOut+HalfWidth);
+           // normals
+           pcl::PointCloud<pcl::Normal>::Ptr normals2 = getNormals(subcloud2,scaleRadius);
+           pcl::PointCloud<pcl::PointNormal>::Ptr subcloud2WithNormals = addNormalsToCloud(subcloud2,normals2);
+           //normalsVis(subcloud2,normals2); 
+               // extract features
+           pcl::PointCloud<pcl::PointXYZ>::Ptr Harris2 = findHarrisCorners(subcloud2,normals2,harrisRadius,harrisThresh);
+
+           // build descriptors of keypoints
+           pcl::PointCloud<pcl::FPFHSignature33>::Ptr descriptors2 = calculateFPFHDescriptors(Harris2,subcloud2,normals2,scaleRadius);
+           // Match features
+           double error;
+           //Eigen::Matrix4f Xform = matchFeaturesRANSAC(Harris2,descriptors2,Harris1,descriptors1,&error);
+           Eigen::Matrix4f Xform = matchFeaturesRANSAC(subcloud2WithNormals,descriptors2,subcloud1WithNormals,descriptors1,&error);
+           std::cout << Xform <<std::endl; 
+           Eigen::Vector3d match;
+           match << double(iOut),double(jOut), error;
+           std::cout << match <<std::endl;
+           matchMetric.push_back(match);
+           matchgoodness << match(0) << ","<<match(1)<<","<<match(2)<<std::endl;
+           pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud(new pcl::PointCloud<pcl::PointXYZ> ());
+           pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_features(new pcl::PointCloud<pcl::PointXYZ> ());
+           pcl::transformPointCloud(*subcloud2,*transformed_cloud,Xform);
+           pcl::transformPointCloud(*Harris2,*transformed_features,Xform);
+
+           if (VIEW_SPINNING_CLOUD){
                path.PlotProposedMatches(iOut,jOut,5.0);
                
                pcl::visualization::PCLVisualizer viewer ("3D Viewer");
                viewer.setSize(1100,1100);
                pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> pccolor(subcloud1, 90, 0, 0);
-               pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> kpcolor(subcloud2, 90, 80, 0);
+               pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> pccolorFeat(Harris1, 0, 255, 255);
+               pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> kpcolor(transformed_cloud, 90, 80, 0);
+               pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> kpcolorFeat(transformed_features, 255, 0, 255);
                viewer.addPointCloud(subcloud1,pccolor,"Cloud1.png");
-               viewer.addPointCloud(subcloud2,kpcolor,"Cloud2.png");
+               viewer.addPointCloud(Harris1,pccolorFeat,"Cloud1Features.png");
+               viewer.addPointCloud(transformed_cloud,kpcolor,"Cloud2.png");
+               viewer.addPointCloud(transformed_features,kpcolorFeat,"Cloud2Features.png");
+               viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 4, "Cloud1Features.png"); 
                viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "Cloud1.png"); 
-               viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "Cloud2.png"); 
+               viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "Cloud2Features.png"); 
+               
                Eigen::Vector4f initViewPoint(-240.,0.,50.,1.);
                Eigen::Vector4f focalPoint;
                pcl::compute3DCentroid(*subcloud1,focalPoint);
@@ -151,8 +184,6 @@ int main(int argc, char** argv)
                float viewAngle = 0;
                int labelIdx = 0;
                std::string baseName ("gifs/cloudView");
-               pcl::io::savePCDFileASCII("firstPass.pcd",*subcloud1);
-               pcl::io::savePCDFileASCII("secondPass.pcd",*subcloud2);
                while (!viewer.wasStopped () )
                {   // make rotmat
                 if (viewAngle < 6.28){
@@ -173,7 +204,6 @@ int main(int argc, char** argv)
                    labelIdx++;
                } 
                viewer.close();
-              /*
               pcl::Normal viewDir1 = avgNormal(normals1);
               pcl::Normal viewDir2 = avgNormal(normals2);
               cv::Mat rangeImage1 = imageFromCloudInDirection(subcloud1,viewDir1,.5,.01);
@@ -183,7 +213,7 @@ int main(int argc, char** argv)
               cv::namedWindow("image2", CV_WINDOW_AUTOSIZE);
               cv::imshow("image2", rangeImage2);
               cv::waitKey(5.); 
-              */
+ 
               pcl_sleep (.3); 
              }
          }
