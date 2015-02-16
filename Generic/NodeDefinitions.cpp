@@ -513,6 +513,39 @@ FeatureNode::FeatureNode(PoseNode Pose, ResonMeasurement Meas){
 
 }
 
+
+pcl::PointCloud<pcl::PointXYZ>::Ptr Trajectory::ExtractSubcloudFixedWidth(int center, double mapWidth){
+     // initialize output
+     pcl::PointCloud<pcl::PointXYZ>::Ptr temp ;
+     pcl::PointCloud<pcl::PointXYZ>::Ptr output (new pcl::PointCloud<pcl::PointXYZ>);
+     // calc indices
+     int timeHalfWidth = 2.*mapWidth/poses[center].DVL[0]*.33; // 3 Hz data
+     int firstIndex = std::max(center - timeHalfWidth,0);
+     int lastIndex = std::min(center + timeHalfWidth, (int)poses.size()-1);
+     // extract subcloud
+     temp = ExtractSubcloud(firstIndex,lastIndex);
+     // squared distance for comparison
+     double refdistSq = mapWidth*mapWidth/4.;
+     // go through and erase anything greater than refdist away in the horizontal
+     for (int ii = 0; ii<temp->points.size(); ii++){
+        double xx = temp->points[ii].x;
+        double yy = temp->points[ii].y;
+        if ((xx*xx) + (yy*yy) < refdistSq){
+            // this is inefficient, but oh well.
+            output->points.push_back(temp->points[ii]);
+            
+        } else {
+            std::cout<< ii << " too far.\n";
+        } 
+              
+     }
+
+   return output;
+
+}
+
+
+
 pcl::PointCloud<pcl::PointXYZ>::Ptr Trajectory::ExtractSubcloud(int idx1, int idx2){
 
 

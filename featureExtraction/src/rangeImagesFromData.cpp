@@ -112,12 +112,12 @@ int main(int argc, char** argv){
       // Guess at a timestamp map halfwidth based on speed, map size, and time
       int timeHalfWidth = 2.*mapWidth/path.poses[iT].DVL[0]*.33; // 3 Hz data
       int firstIndex = max(iT - timeHalfWidth,0);
-      int lastIndex = min(iT + timeHalfWidth, (int)path.poses.size());
+      int lastIndex = min(iT + timeHalfWidth, (int)path.poses.size()-1);
       // okay, now extract subcloud at those indices
       pcl::PointCloud<pcl::PointXYZ>::Ptr subcloud (new pcl::PointCloud<pcl::PointXYZ>);
-      subcloud = path.ExtractSubcloud(firstIndex,lastIndex);
+      //subcloud = path.ExtractSubcloud(firstIndex,lastIndex);
       // TODO: window the extracted subcloud spatially, instead of just temporally
-
+      subcloud = path.ExtractSubcloudFixedWidth(iT,mapWidth);
       // calculate normals
       float scaleRadius = 1.;
       pcl::PointCloud<pcl::Normal>::Ptr subcloudnormals = getNormals(subcloud,scaleRadius);
@@ -125,12 +125,16 @@ int main(int argc, char** argv){
       // view direction
       pcl::Normal viewDir = avgNormal(subcloudnormals);
       cv::Mat rangeImage = imageFromCloudInDirection(subcloud,viewDir,.5,.02);
+      cv::Mat mask = imageFromCloudInDirection(subcloud,viewDir,.5,.02,true);
       cv::imshow("image1", rangeImage);
       cv::waitKey(50);
       //cv::blur(rangeImage,rangeImage,cv::Size(11,11));
       char filename[50];
+      char maskname[50];
       snprintf(filename, sizeof(filename),"../data/rangeImages/rangeImage_%d_%d.png",iT,(int)mapWidth);
+      snprintf(maskname, sizeof(mask),"../data/rangeImages/mask_%d_%d.png",iT,(int)mapWidth);
       cv::imwrite(filename,rangeImage);
+      cv::imwrite(maskname,mask);
       xLast = xCurrent;
    }
 }
