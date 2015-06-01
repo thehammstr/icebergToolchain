@@ -746,8 +746,10 @@ cv::Mat imageFromCloudInDirection(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl
   cv::Mat equalizedImage;
   cv::equalizeHist(output,equalizedImage);
 
-#if(0)
+#if(1)
   cv::namedWindow("image", CV_WINDOW_AUTOSIZE);
+  cv::imshow("image",output);
+  cv::waitKey();
   cv::imshow("image", equalizedImage);
   cv::waitKey(); 
   //std::cout<<output<<std::endl;
@@ -781,6 +783,8 @@ cv::Mat fillInRangeImageGaps(pcl::PointCloud<pcl::PointXYZI>::ConstPtr input, bo
    cv::Size kernSize = cv::Size(5,5);
    int maxLoop = 10000;
    cv::Mat inputImage = filledImage.clone();
+   cv::namedWindow("progress",CV_WINDOW_AUTOSIZE);
+   cv::imshow("progress",inputImage);
    double lastResid = 1000.;
    int loopTracker = 0;
    for( int iLoop = 0; iLoop < maxLoop; iLoop++){
@@ -817,4 +821,29 @@ cv::Mat fillInRangeImageGaps(pcl::PointCloud<pcl::PointXYZI>::ConstPtr input, bo
 
 
 }
+/*
+cv::Mat displayMultipleImages(int nHeight, int nWidth, std::vector<cv::Mat> images){
 
+  if (images.size() > nHeight*nWidth)
+     std::cout<< "Too many images. truncating"<<std::endl;
+
+  cv::Mat megaImage;
+  int szx = 1000;
+  int szy = 1000;
+  megaImage.create(szs,szy,CV_8UC1);
+  int m = 0;
+  int n = 0;
+    for (int ii = 0; ii<nHeight; ii++, m+=szx/nHeight) {
+       for (int jj=0; jj<nWidth; jj++, n+= szy/nWidth) {
+          int x = images[nWidth*ii + jj].cols;
+          int y = images[nWidth*ii + jj].rows;
+          int max = (x > y)? x: y;
+          float scale = (float)( (float) max/size)
+          cv::Rect roi 
+          cv::SetImageROI(megaImage, cv::Rect(n, m, (int)( x/scale ), (int)( y/scale )));
+          
+
+       }
+    }
+}
+*/

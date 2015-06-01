@@ -241,7 +241,7 @@ bool Trajectory::PlotTrajectory(std::vector<PoseLink> links){
             color++;
 
     }
-  int LLine = 30;
+  int LLine = 80;
   for (int nn=0; nn<links.size(); nn++){
      Eigen::Matrix3f m;
      m = Eigen::AngleAxisf(poses[links[nn].idx1].psiEst(), Eigen::Vector3f::UnitZ());
@@ -254,13 +254,24 @@ bool Trajectory::PlotTrajectory(std::vector<PoseLink> links){
      //std::cout <<  ", world offset: " << worldoffset;
      for (int qline=0; qline<LLine; qline++){
         pcl::PointXYZRGB point;
+        pcl::PointXYZRGB pointErr;
         point.x = poses[links[nn].idx1].xEst() + ((double)qline/(double)LLine)*(worldoffset(0)) ;
 	point.y = poses[links[nn].idx1].yEst() + ((double)qline/(double)LLine)*(worldoffset(1)) ;
 	point.z = poses[links[nn].idx1].zEst() + ((double)qline/(double)LLine)*(worldoffset(2)) ;
+        pointErr.x = poses[links[nn].idx2].xEst() + ((double)qline/(double)LLine)*
+                                                    (poses[links[nn].idx1].xEst() + worldoffset(0) - poses[links[nn].idx2].xEst()) ;
+	pointErr.y = poses[links[nn].idx2].yEst() + ((double)qline/(double)LLine)*
+                                                    (poses[links[nn].idx1].yEst() + worldoffset(1) - poses[links[nn].idx2].yEst()) ;
+	pointErr.z = poses[links[nn].idx2].zEst() + ((double)qline/(double)LLine)*
+                                                    (poses[links[nn].idx1].zEst() + worldoffset(2) - poses[links[nn].idx2].zEst()) ;
 	point.r = 00;
 	point.g = 250;
 	point.b = 00;
+	pointErr.r = 250;
+	pointErr.g = 0;
+	pointErr.b = 00;
 	linkCloud->points.push_back(point);
+        linkCloud->points.push_back(pointErr);
      }
      pcl::PointXYZRGB target; 
      target.x = poses[links[nn].idx2].xEst();

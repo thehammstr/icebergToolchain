@@ -34,11 +34,11 @@ struct OdometryError {
 	residual[_X_] = 1.*Xres ;
 	residual[_Y_] = 1.*Yres ;
 	} else {
-	residual[_X_] = 1.*Xres ;
-	residual[_Y_] = 1.*Yres ;
+	residual[_X_] = .8*Xres ;
+	residual[_Y_] = .8*Yres ;
 	}
-	residual[_PSI_] = 100.*(poseEst2[_PSI_] - (poseEst1[_PSI_] + ( T(pose1.inputs[0]) - poseEst1[_B_] )*T(dT)  ));
-	residual[_B_] =  T(6000.*(poseEst2[_B_] - poseEst1[_B_]));
+	residual[_PSI_] = 10.*(poseEst2[_PSI_] - (poseEst1[_PSI_] + ( T(pose1.inputs[0]) - poseEst1[_B_] )*T(dT)  ));
+	residual[_B_] =  T(1000.*(poseEst2[_B_] - poseEst1[_B_]));
 
 	return true;
   }
@@ -264,7 +264,7 @@ struct RegistrationError {
         // for 40m standoff distance, weight of PSI term = 40*weight of x term
 	//residual[_PSI_] = 40.*_ALFA_*(x2Link[1] - x2Body1[1]);  // point of reference: .025rad = 1m error at 40m standoff distance
 	residual[_PSI_] = .001*relWeight*(x2Link[1] - x2Body1[1]);  // point of reference: .025rad = 1m error at 40m standoff distance
-        residual[_B_] = .001*relWeight*(AvgMotion + poseEst2[_B_]); 
+        residual[_B_] = .001*relWeight*(AvgMotion + poseEst2[_B_]); //.001
         residual[_B_+1] = .001*relWeight*(AvgMotion + poseEst1[_B_]); //10000.0*relWeight*((x2Link[1] - x2Body1[1])/(link.t2-link.t1) + poseEst2[_B_]);
 	return true;
   }

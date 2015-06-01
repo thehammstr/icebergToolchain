@@ -207,10 +207,10 @@ for (int jSweep = -80; jSweep < -90; jSweep ++ ){
     
     // add icp links
     for (int jj = 0; jj<Links.size(); jj++){
-        double relativeWeight = 1.;
+        double relativeWeight = .01;
         ceres::CostFunction* icp_cost_function = 
                 RegistrationError::Create(Links[jj],relativeWeight);
-        ceres::LossFunction* loss_fxn = new ceres::HuberLoss(10.);
+        ceres::LossFunction* loss_fxn = new ceres::HuberLoss(20.);
         problem.AddResidualBlock(icp_cost_function,
                                      loss_fxn,
                                      path.poses[Links[jj].idx1].state,
@@ -229,7 +229,7 @@ for (int jSweep = -80; jSweep < -90; jSweep ++ ){
     options.linear_solver_type = ceres::ITERATIVE_SCHUR; //SPARSE_SCHUR;
     options.max_solver_time_in_seconds = 12800.;
     options.minimizer_progress_to_stdout = true;
-    options.max_num_iterations = 500;
+    options.max_num_iterations = 800;
     ceres::Solver::Summary summary;
     // SOLVE
 

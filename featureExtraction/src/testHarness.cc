@@ -295,8 +295,10 @@ main (int argc, char** argv)
   //cv::Canny(canny2,canny2,lowThreshold,lowThreshold*ratio,kernel_size);
   //cv::blur(canny1,canny1,cv::Size(3,3));
   //cv::blur(canny2,canny2,cv::Size(3,3));
-  cv::imshow("image1", canny1);
-  cv::imshow("image2", canny2);
+cv::namedWindow("image4", CV_WINDOW_AUTOSIZE);
+cv::namedWindow("image5", CV_WINDOW_AUTOSIZE);
+  cv::imshow("image4", canny1);
+  cv::imshow("image5", canny2);
   // template matching
   cv::Mat corrSurf;
   cv::matchTemplate(canny1,canny2,corrSurf,CV_TM_CCORR_NORMED);
