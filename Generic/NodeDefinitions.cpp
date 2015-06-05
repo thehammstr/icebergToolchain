@@ -182,7 +182,7 @@ pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(basic_c
   //viewer->close();
 
   std::cout << "width: " << featureCloud->width << ", height:  "<< featureCloud->height<<std::endl;
-  //pcl::io::savePCDFileASCII("output_traj.pcd",*basic_cloud_ptr);
+  pcl::io::savePCDFileASCII("output_traj.pcd",*basic_cloud_ptr);
   pcl::io::savePCDFileASCII("output_cloud.pcd",*featureCloud);
 
   return true;

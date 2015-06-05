@@ -45,7 +45,10 @@ def main(args):
       filename = sys.argv[1]
 
    print filename
-   outfilePath = '../DATA/Soquel20121031/'
+   if (len(sys.argv) < 3):
+      outfilePath = '../DATA/Soquel20121031/'
+   else:
+      outfilePath = sys.argv[2]
    csvfile = open(filename,'rb')
    datareader = csv.reader(csvfile,delimiter=',')
    header = next(datareader,None)
@@ -62,13 +65,14 @@ def main(args):
    lastState = np.zeros((6,1))
    state = startState
    logCount = 0
-   statehist = np.zeros((30000,6))
+   maxLogs = 70000
+   statehist = np.zeros((maxLogs,6))
    #statehist[logCount] = state.T
    dX = np.zeros((3,1))
-   vels = np.zeros((30000,3))
-   omegas = np.zeros((30000,1))
-   times = np.zeros((30000,1))
-   beamCounters = np.zeros((30000,1))
+   vels = np.zeros((maxLogs,3))
+   omegas = np.zeros((maxLogs,1))
+   times = np.zeros((maxLogs,1))
+   beamCounters = np.zeros((maxLogs,1))
    logCount = 0
    # read in data, group by timestamp
    beams_t = np.zeros((512,3))
@@ -76,6 +80,7 @@ def main(args):
    beamHist = []
    startFlag = True
    for row in datareader:
+    if logCount < maxLogs:
       # record time
       time_t = float(row[_TIME_])
       if startFlag:

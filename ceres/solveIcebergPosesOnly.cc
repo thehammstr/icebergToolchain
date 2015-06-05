@@ -91,7 +91,7 @@ int main(int argc, char** argv)
 // update path with initial guess of bias
 	//path.updateWithConstBias(-.00012);
     path.PlotTrajectory(Links);	
-	path.addConstBias(.0001);
+//	path.addConstBias(.0001);
 /*-------------------------------------------------*/
 /*----------- Now do something with the data-------*/
 /*-------------------------------------------------*/
@@ -122,8 +122,8 @@ int main(int argc, char** argv)
   double bestCost = 1e12;
   double biasguess = 1.;
 
-for (int jSweep = -80; jSweep < -90; jSweep ++ ){
-    float iSweep = float(jSweep)*0.00001;
+for (int jSweep = -8; jSweep < -9; jSweep ++ ){
+    float iSweep = float(jSweep)*0.0001;
     // initialize problem
     ceres::Problem problem;
     double avgMotion = 0.;
@@ -229,7 +229,7 @@ for (int jSweep = -80; jSweep < -90; jSweep ++ ){
     options.linear_solver_type = ceres::ITERATIVE_SCHUR; //SPARSE_SCHUR;
     options.max_solver_time_in_seconds = 12800.;
     options.minimizer_progress_to_stdout = true;
-    options.max_num_iterations = 800;
+    options.max_num_iterations = 500;
     ceres::Solver::Summary summary;
     // SOLVE
 
