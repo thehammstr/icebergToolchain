@@ -351,8 +351,8 @@ PCLViewer::drawGoodLinks()
 {
   recordedLinks->points.clear();
 
-  std::cout<< "Drawing good links!"<<std::endl;
-  std::cout << "Valid Links: " << validLinks.size() << std::endl;
+  //std::cout<< "Drawing good links!"<<std::endl;
+  //std::cout << "Valid Links: " << validLinks.size() << std::endl;
 
   for (int iGood = 0; iGood < validLinks.size(); ++iGood){
     PointT pt1 = trajectory->points[validLinks[iGood].idx1];
