@@ -21,7 +21,8 @@
 #include "CSVRow.h"
 #include "NodeDefinitions.h"
 #include "cloudManipulation.h"
-
+#include <string>
+#include <iostream>
 typedef pcl::PointXYZRGBA PointT;
 typedef pcl::PointCloud<PointT> PointCloudT;
 
@@ -40,6 +41,8 @@ public:
 
   void 
   loadTrajectory( char *  ); 
+  void
+  loadTrajectory(char *,const char *); // if link file provided by user
 
 public slots:
   void
@@ -66,6 +69,12 @@ public slots:
   void
   blueSliderValueChanged (int value);
 
+  void 
+  deleteSelected();
+
+  void
+  highlightLink(int value);
+
 protected:
   boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
   boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer2;
@@ -81,6 +90,7 @@ protected:
   Eigen::Matrix4f Xform;
   std::vector<PoseLink> validLinks;
   Trajectory path;
+  std::string linkFile;
   int red;
   int green;
   int blue;
@@ -89,6 +99,7 @@ protected:
   int idx2;
   int rawSlider2;
   int halfwidth;
+  int selectedLink;
   bool icpHasBeenRun;
   
   void updateLinkDisplay();
@@ -100,8 +111,11 @@ protected:
   pcl::PointCloud<pcl::PointNormal>::Ptr 
        addNorms(pcl::PointCloud<PointT>::Ptr,int);
   void writeLinksToFile();
+  void readLinksFromFile();
+  void drawGoodLinks(); 
 private:
   Ui::PCLViewer *ui;
+  bool isValidInput(std::vector<std::string>);
 
 };
 

@@ -32,10 +32,11 @@ PCLViewer::PCLViewer (QWidget *parent) :
   red   = 128;
   green = 128;
   blue  = 128;
-  idx1 = 200;
+  idx1 = 100;
   idx2 = 201;
   halfwidth = 100;
   icpHasBeenRun = false;
+  selectedLink = 0;
   // Fill the cloud with some points
   for (size_t i = 0; i < cloud->points.size (); ++i)
   {
@@ -59,18 +60,20 @@ PCLViewer::PCLViewer (QWidget *parent) :
   viewer2->setupInteractor (ui->qvtkWidget_2->GetInteractor (), ui->qvtkWidget_2->GetRenderWindow ());
   ui->qvtkWidget_2->update ();
 
-  // Connect "random" button and the function
+  // Connect buttons and the function
   connect (ui->pushButton_write,  SIGNAL (clicked ()), this, SLOT (writeButtonPressed ()));
   connect (ui->pushButton_delete, SIGNAL (clicked ()), this, SLOT (deleteButtonPressed ()));
   connect (ui->pushButton_ICP, SIGNAL (clicked ()), this, SLOT (icpButtonPressed ()));
-  // Connect R,G,B sliders and their functions
+  connect (ui->pushButton_delete_select, SIGNAL (clicked ()), this, SLOT (deleteSelected ()));
+  // Connect sliders and their functions
   connect (ui->horizontalSlider_R, SIGNAL (valueChanged (int)), this, SLOT (redSliderValueChanged (int)));
   connect (ui->horizontalSlider_G, SIGNAL (valueChanged (int)), this, SLOT (greenSliderValueChanged (int)));
   connect (ui->horizontalSlider_B, SIGNAL (valueChanged (int)), this, SLOT (blueSliderValueChanged (int)));
   connect (ui->horizontalSlider_R, SIGNAL (sliderReleased ()), this, SLOT (RGBsliderReleased ()));
   connect (ui->horizontalSlider_G, SIGNAL (sliderReleased ()), this, SLOT (RGBsliderReleased ()));
   connect (ui->horizontalSlider_B, SIGNAL (sliderReleased ()), this, SLOT (RGBsliderReleased ()));
-
+  // Connect spin box with function (select link)
+  connect (ui->spinBox_link, SIGNAL (valueChanged (int)), this, SLOT (highlightLink (int) ));
   // Connect point size slider
   connect (ui->horizontalSlider_p, SIGNAL (valueChanged (int)), this, SLOT (pSliderValueChanged (int)));
 
@@ -91,8 +94,17 @@ PCLViewer::PCLViewer (QWidget *parent) :
   ui->qvtkWidget->update ();
 }
 
-void 
+void
 PCLViewer::loadTrajectory( char * filename )
+{
+  const char * linkFile_name = "recordedLinks.csv";
+  std::cout<< "Using default link file name: recordedLinks.csv\n";
+  loadTrajectory(filename, linkFile_name);
+
+}
+
+void 
+PCLViewer::loadTrajectory( char * filename, const char * linkFileName  )
 {
 
    std::cout<<"loading file " << filename <<std::endl;
@@ -124,20 +136,25 @@ PCLViewer::loadTrajectory( char * filename )
    }
     	std::cout << Nobs << " observations." << std::endl;
 	std::cout << path.poses.size() << " poses." << std::endl;
+
+  // Link file stuff
+  linkFile = linkFileName;
+  readLinksFromFile();
+
   path.addConstBias(.00004);
   // build trajectory
   updateTrajectory();
-
+  //renderSubClouds();
+  //showSubCloudExtents();
    viewer->updatePointCloud (cloud, "cloud");
    viewer->updatePointCloud (trajectory, "trajectory");
-   updateLinkDisplay();
    viewer->resetCamera ();
    ui->qvtkWidget->update ();
 
    renderSubClouds();
    viewer2->resetCamera ();
    ui->qvtkWidget_2->update ();
-
+   drawGoodLinks(); 
    return;
 }
 
@@ -206,6 +223,8 @@ PCLViewer::showSubCloudExtents()
 {
   // color subclouds in window 1
   subcloud1a->clear();
+  std::cout<< "idx1: " << idx1 << ", idx2: "<<idx2<<std::endl;
+
   for (int iT = idx1-halfwidth; iT<idx1+halfwidth; iT ++)
   {
     for (int jT = 0; jT < path.poses[iT].measurements.size(); jT += 5*STRIDE)
@@ -305,20 +324,6 @@ PCLViewer::writeButtonPressed ()
 {
   printf ("write button was pressed\n");
   if (icpHasBeenRun){
-  for (int ii = 0; ii<proposedLinks->points.size();ii++)
-  {
-     PointT goodpoint;
-     goodpoint.x = proposedLinks->points[ii].x;
-     goodpoint.y = proposedLinks->points[ii].y;
-     goodpoint.z = proposedLinks->points[ii].z;
-     goodpoint.r = 0;
-     goodpoint.g = 255;
-     goodpoint.b = 0;
-     recordedLinks->points.push_back(goodpoint);
-  }
-  viewer->updatePointCloud (recordedLinks, "recordedLinks");
-  ui->qvtkWidget->update ();
-
   // RECORD Link INFO
   PoseLink link;
   link.idx1 = idx1;
@@ -334,8 +339,77 @@ PCLViewer::writeButtonPressed ()
   }
   validLinks.push_back(link);
   writeLinksToFile();
+  // NOW DISPLAY LINKS
+  drawGoodLinks();
   } else {
     std::cout<<"ICP has not been run!\n";
+  }
+}
+
+void
+PCLViewer::drawGoodLinks()
+{
+  recordedLinks->points.clear();
+
+  std::cout<< "Drawing good links!"<<std::endl;
+  std::cout << "Valid Links: " << validLinks.size() << std::endl;
+
+  for (int iGood = 0; iGood < validLinks.size(); ++iGood){
+    PointT pt1 = trajectory->points[validLinks[iGood].idx1];
+    PointT pt2 = trajectory->points[validLinks[iGood].idx2];
+    float numPoints = 1000;
+    for (int iA = 0; iA<numPoints; iA++)
+    {
+     PointT goodPoint;
+     goodPoint.x = pt1.x + (((float)iA)/(float)numPoints)*(pt2.x - pt1.x);
+     goodPoint.y = pt1.y + (((float)iA)/(float)numPoints)*(pt2.y - pt1.y);
+     goodPoint.z = pt1.z + (((float)iA)/(float)numPoints)*(pt2.z - pt1.z);
+     if (iGood == selectedLink){
+     goodPoint.r = 255;
+     goodPoint.g = 0;
+     goodPoint.b = 0;
+     } else {
+     goodPoint.r = 0;
+     goodPoint.g = 255;
+     goodPoint.b = 0;
+     }
+     recordedLinks->points.push_back(goodPoint);
+    }
+  viewer->updatePointCloud (recordedLinks, "recordedLinks");
+  ui->qvtkWidget->update ();
+  } 
+}
+
+void 
+PCLViewer::deleteSelected()
+{
+   printf ("delete button was pressed\n");
+
+   if (!validLinks.empty()){
+     validLinks.erase(validLinks.begin() + selectedLink);
+     if (selectedLink >= validLinks.size() ){
+        selectedLink = validLinks.size() - 1;
+     }
+     highlightLink(selectedLink);
+     writeLinksToFile();
+     drawGoodLinks();
+   } else {
+     printf("nothing to delete\n");
+   }
+   return;
+}
+
+void 
+PCLViewer::highlightLink(int link)
+{
+  if (link < 0 || link >= validLinks.size() ){
+    std::cout << "Warning: selected number not in range" << std::endl;
+    std::cout << "There are only "<< validLinks.size() << " links."<<std::endl;
+    ui->spinBox_link->setValue(selectedLink);
+  } else {
+    selectedLink = link;
+    ui->spinBox_link->setValue(selectedLink);
+    drawGoodLinks();
   }
 }
 
@@ -344,7 +418,7 @@ PCLViewer::writeLinksToFile()
 {
   ofstream myfile;
   //myfile.open("../../DATA/Soquel20121031/recordedLinks.csv");
-  myfile.open("recordedLinks.csv");
+  myfile.open(linkFile.c_str());
   // print header
   myfile << " idx1, idx2, Transformationmatrix (4x4, row major)\n";
   // print data
@@ -359,21 +433,85 @@ PCLViewer::writeLinksToFile()
  
   return;
 }
+
+void
+PCLViewer::readLinksFromFile()
+{
+ std::string line;
+ ifstream myfile;
+ myfile.open(linkFile.c_str());
+ if (myfile.is_open())
+ {
+   // burn off header
+   std::getline(myfile,line);
+   int numInputs = 0;
+   while (std::getline(myfile,line))
+   {
+      if (line.size()){
+        // std::cout << line.size() << std::endl;
+        std::stringstream ss(line);
+        std::string token;
+        std::vector<std::string> parsedInput;
+        while (std::getline(ss,token,','))
+        {
+          parsedInput.push_back(token);
+        }
+        if (isValidInput(parsedInput)){
+          // load it into PoseLink
+          PoseLink inputLink;
+          inputLink.idx1 = std::atoi(parsedInput[0].c_str());
+          inputLink.idx2 = std::atoi(parsedInput[1].c_str());
+          for (int iLink = 0; iLink < 16; ++iLink){
+             inputLink.Transform[iLink] = std::atof(parsedInput[iLink+2].c_str());
+          }
+          std::cout << "Link!\n";
+          validLinks.push_back(inputLink);
+          ++numInputs;
+        }
+      }
+   }
+
+   std::cout<<"Loaded " << numInputs << " links" << std::endl;
+   myfile.close();
+
+ } else {
+   std::cout << "Could not locate file " << linkFile <<std::endl;
+ }
+
+ return;
+}
+
+bool
+PCLViewer::isValidInput(std::vector<std::string> parsed_input)
+{
+  // need 18 entries per line
+  if (parsed_input.size() == 18 && std::atoi(parsed_input[0].c_str()) )
+  {
+    int idx1 = std::atoi(parsed_input[0].c_str());
+    int idx2 = std::atoi(parsed_input[1].c_str());
+    // indices must be in range and idx1 <= idx2
+    if (idx1 >= 0 && idx1 <= idx2 && idx2 <= path.poses.size())
+       return true;
+  } 
+
+  return false;
+}
+
+
+
 void
 PCLViewer::deleteButtonPressed()
 {
    printf ("delete button was pressed\n");
 
-   if (validLinks.size()>0){
-     // remove link depiction
-     for (int ii = 0; ii<proposedLinks->points.size();ii++)
-     {
-       recordedLinks->points.pop_back();
-     }
-     viewer->updatePointCloud (recordedLinks, "recordedLinks");
-     ui->qvtkWidget->update ();
+   if (!validLinks.empty()){
      validLinks.pop_back();
+     if (selectedLink >= validLinks.size() ){
+        selectedLink=validLinks.size()-1;
+        highlightLink(selectedLink);
+     }
      writeLinksToFile();
+     drawGoodLinks();
    } else {
      printf("nothing to delete\n");
    }
@@ -560,7 +698,9 @@ PCLViewer::pSliderValueChanged (int value)
   //updateTrajectory();
   viewer->updatePointCloud(cloud, "cloud");
   viewer->updatePointCloud(trajectory,"trajectory");
-  ui->qvtkWidget->update ();
+  //RGBsliderReleased();
+  
+  //ui->qvtkWidget->update ();
 }
 
 void
@@ -576,6 +716,9 @@ PCLViewer::redSliderValueChanged (int value)
   //printf ("redSliderValueChanged: [%d|%d|%d]\n", red, green, blue);
   updateLinkDisplay();
   showSubCloudExtents();
+  ui->lcdNumber_R->display(idx1);
+  //RGBsliderReleased();
+
 }
 
 void
@@ -590,6 +733,8 @@ PCLViewer::greenSliderValueChanged (int value)
      idx2 = path.poses.size() - halfwidth -1;
   updateLinkDisplay();
   showSubCloudExtents();
+  ui->lcdNumber_G->display(idx2);
+  //RGBsliderReleased();
 }
 
 void
@@ -599,6 +744,7 @@ PCLViewer::blueSliderValueChanged (int value)
   // make sure things still valid
   redSliderValueChanged(rawSlider1);
   greenSliderValueChanged(rawSlider2);
+  //RGBsliderReleased();
 }
 
 PCLViewer::~PCLViewer ()
