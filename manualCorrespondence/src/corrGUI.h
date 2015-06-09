@@ -75,6 +75,17 @@ public slots:
   void
   highlightLink(int value);
 
+  void
+  fileNameChanged();
+
+  void 
+  readLinksFromFile();
+
+  void
+  writeLinksToFile();
+
+
+
 protected:
   boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
   boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer2;
@@ -110,13 +121,11 @@ protected:
   void runGridSearch();
   pcl::PointCloud<pcl::PointNormal>::Ptr 
        addNorms(pcl::PointCloud<PointT>::Ptr,int);
-  void writeLinksToFile();
-  void readLinksFromFile();
   void drawGoodLinks(); 
 private:
   Ui::PCLViewer *ui;
   bool isValidInput(std::vector<std::string>);
-
+  void displayFileName();
 };
 
 #endif // PCLVIEWER_H

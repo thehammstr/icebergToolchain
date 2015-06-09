@@ -65,6 +65,12 @@ PCLViewer::PCLViewer (QWidget *parent) :
   connect (ui->pushButton_delete, SIGNAL (clicked ()), this, SLOT (deleteButtonPressed ()));
   connect (ui->pushButton_ICP, SIGNAL (clicked ()), this, SLOT (icpButtonPressed ()));
   connect (ui->pushButton_delete_select, SIGNAL (clicked ()), this, SLOT (deleteSelected ()));
+  connect (ui->pushButton_load_links, SIGNAL (clicked ()), this, SLOT (readLinksFromFile ()));
+  connect (ui->pushButton_write_all, SIGNAL (clicked ()), this, SLOT (writeLinksToFile ()));
+
+  // Connect text boxes
+  connect (ui->plainTextEdit_linkfile, SIGNAL (textChanged ()), this, SLOT (fileNameChanged ()));
+   
   // Connect sliders and their functions
   connect (ui->horizontalSlider_R, SIGNAL (valueChanged (int)), this, SLOT (redSliderValueChanged (int)));
   connect (ui->horizontalSlider_G, SIGNAL (valueChanged (int)), this, SLOT (greenSliderValueChanged (int)));
@@ -430,7 +436,7 @@ PCLViewer::writeLinksToFile()
     myfile << std::endl;
   }
   myfile.close();
- 
+  std::cout<< validLinks.size()<< " links written to " << linkFile << std::endl; 
   return;
 }
 
@@ -477,7 +483,9 @@ PCLViewer::readLinksFromFile()
  } else {
    std::cout << "Could not locate file " << linkFile <<std::endl;
  }
-
+ 
+ displayFileName(); 
+ drawGoodLinks();
  return;
 }
 
@@ -497,6 +505,25 @@ PCLViewer::isValidInput(std::vector<std::string> parsed_input)
   return false;
 }
 
+
+void
+PCLViewer::displayFileName()
+{
+  QString outName = linkFile.c_str();
+  //ui->plainTextEdit_linkfile->clear();
+  ui->plainTextEdit_linkfile->setPlainText(outName);
+
+}
+
+void
+PCLViewer::fileNameChanged()
+{
+  QString qs = ui->plainTextEdit_linkfile->toPlainText();
+  // convert to string and set to linkfile
+  linkFile.clear();
+  linkFile = qs.toUtf8().constData();
+  return;
+}
 
 
 void
