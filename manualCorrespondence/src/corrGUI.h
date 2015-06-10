@@ -5,6 +5,7 @@
 #include <fstream>
 // Qt
 #include <QMainWindow>
+#include <QTimer>
 
 // Point Cloud Library
 #include <pcl/point_cloud.h>
@@ -84,7 +85,8 @@ public slots:
   void
   writeLinksToFile();
 
-
+  void 
+  renderSubClouds();
 
 protected:
   boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
@@ -112,9 +114,9 @@ protected:
   int halfwidth;
   int selectedLink;
   bool icpHasBeenRun;
+  QTimer* renderTimer;
   
   void updateLinkDisplay();
-  void renderSubClouds();
   void updateTrajectory();
   void showSubCloudExtents();
   void runICP();

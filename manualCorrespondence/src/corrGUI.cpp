@@ -37,6 +37,7 @@ PCLViewer::PCLViewer (QWidget *parent) :
   halfwidth = 100;
   icpHasBeenRun = false;
   selectedLink = 0;
+  renderTimer = new QTimer(this);
   // Fill the cloud with some points
   for (size_t i = 0; i < cloud->points.size (); ++i)
   {
@@ -80,9 +81,11 @@ PCLViewer::PCLViewer (QWidget *parent) :
   connect (ui->horizontalSlider_B, SIGNAL (sliderReleased ()), this, SLOT (RGBsliderReleased ()));
   // Connect spin box with function (select link)
   connect (ui->spinBox_link, SIGNAL (valueChanged (int)), this, SLOT (highlightLink (int) ));
-  // Connect point size slider
+  // This thing doesn't do anything right now.
   connect (ui->horizontalSlider_p, SIGNAL (valueChanged (int)), this, SLOT (pSliderValueChanged (int)));
-
+  // Connect rendering timer for clicking through indices
+  connect (renderTimer,SIGNAL (timeout()), this, SLOT (renderSubClouds() ));
+  // initialize pointclouds
   viewer->addPointCloud (cloud, "cloud");
   viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "cloud");
   viewer->addPointCloud (trajectory, "trajectory");
@@ -279,6 +282,7 @@ PCLViewer::showSubCloudExtents()
 void
 PCLViewer::renderSubClouds()
 {
+  renderTimer->stop();
   // create subclouds in window 2
   pcl::PointCloud<pcl::PointXYZ>::Ptr subSimpleCloud1;
   subSimpleCloud1 = path.ExtractSubcloudAtAlt(idx1-halfwidth,idx1+halfwidth); 
@@ -471,13 +475,24 @@ PCLViewer::readLinksFromFile()
              inputLink.Transform[iLink] = std::atof(parsedInput[iLink+2].c_str());
           }
           std::cout << "Link!\n";
-          validLinks.push_back(inputLink);
-          ++numInputs;
+          // check for duplicate record
+          // bool indicating that an input record is a duplicate
+          bool doop = false;
+          for (int icheck = 0; icheck < validLinks.size(); ++icheck){
+             // if both indices match, then record is a duplicate
+             if (inputLink.idx1 == validLinks[icheck].idx1 && inputLink.idx2 == validLinks[icheck].idx2)
+               doop = true;
+          }
+          if (!doop){
+            //only add unique links to record
+            validLinks.push_back(inputLink);
+            ++numInputs;
+          }
         }
       }
    }
 
-   std::cout<<"Loaded " << numInputs << " links" << std::endl;
+   std::cout<<"Loaded " << numInputs << " new links" << std::endl;
    myfile.close();
 
  } else {
@@ -733,6 +748,8 @@ PCLViewer::pSliderValueChanged (int value)
 void
 PCLViewer::redSliderValueChanged (int value)
 {
+  // start "watchdog" render timer
+  renderTimer->start(1000);
   rawSlider1 = value;
   float frac = (float)value / 100000.;
   idx1 = (int)( frac*path.poses.size() );
@@ -751,6 +768,8 @@ PCLViewer::redSliderValueChanged (int value)
 void
 PCLViewer::greenSliderValueChanged (int value)
 {
+  // start "watchdog" render timer
+  renderTimer->start(1000);
   rawSlider2 = value;
   float frac = (float)value / 100000.;
   idx2 = (int)( frac*path.poses.size() );
