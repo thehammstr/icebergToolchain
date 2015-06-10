@@ -90,7 +90,9 @@ int main(int argc, char** argv)
     }
 // update path with initial guess of bias
 	//path.updateWithConstBias(-.00012);
-    path.PlotTrajectory(Links);	
+    path.PlotTrajectory(Links);
+    std::string dummyfile("testserialize.csv");
+    path.serialize(dummyfile);	
 //	path.addConstBias(.0001);
 /*-------------------------------------------------*/
 /*----------- Now do something with the data-------*/
@@ -264,7 +266,22 @@ for (int jSweep = -8; jSweep < -9; jSweep ++ ){
     std::cout<<std::endl;
 
     path.PlotTrajectory(Links);
-  
+    // Write to file for iterative refinement with GUI
+    // first build output file name [input filename]_modified.csv
+    std::string outfileName;
+    std::string suffix (".csv");
+    std::string suffix1 ("_modified.csv");
+    // don't want to keep appending "modified"
+    std::size_t found = FLAGS_input.find(suffix1);
+      if (found !=std::string::npos){
+      outfileName = FLAGS_input;
+    } else{
+      std::size_t found = FLAGS_input.find(suffix);
+      outfileName = FLAGS_input.substr(0,found) + "_modified" + suffix;
+    }
+    // now save
+    path.serialize(outfileName);
+    /* 
     ofstream outfile;
     outfile.open("output.csv");	 
     //outfile << "t,x,y,psi,bias,input1,input2"<<endl;
@@ -281,7 +298,7 @@ for (int jSweep = -8; jSweep < -9; jSweep ++ ){
 		//cout << path.poses[ii].state[8]<< ' ' << path.poses[ii].state[9] <<endl;
 	
     } 
-
-   
+    */
+    
 
 }

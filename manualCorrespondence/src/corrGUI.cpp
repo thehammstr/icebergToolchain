@@ -150,7 +150,7 @@ PCLViewer::loadTrajectory( char * filename, const char * linkFileName  )
   linkFile = linkFileName;
   readLinksFromFile();
 
-  path.addConstBias(.00004);
+  //path.addConstBias(.00004);
   // build trajectory
   updateTrajectory();
   //renderSubClouds();

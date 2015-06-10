@@ -38,7 +38,7 @@ struct OdometryError {
 	residual[_Y_] = .8*Yres ;
 	}
 	residual[_PSI_] = 10.*(poseEst2[_PSI_] - (poseEst1[_PSI_] + ( T(pose1.inputs[0]) - poseEst1[_B_] )*T(dT)  ));
-	residual[_B_] =  T(1000.*(poseEst2[_B_] - poseEst1[_B_]));
+	residual[_B_] =  T(10000.*(poseEst2[_B_] - poseEst1[_B_]));
 
 	return true;
   }

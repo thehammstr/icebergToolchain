@@ -4,6 +4,7 @@
 #include "ceres/ceres.h"
 #include "ceres/rotation.h"
 #include <vector>
+#include <string>
 #include "CSVRow.h"
 // PCL stuff
 #include <boost/thread/thread.hpp>
@@ -95,13 +96,14 @@ class Trajectory{
 		std::vector<PoseNode> poses;
 		bool PlotTrajectory(void);
                 bool PlotTrajectory(std::vector<PoseLink>);
-                void saveTrajectoryToFile(char * filename); 
+                //void saveTrajectoryToFile(char * filename); 
                 bool PlotProposedMatches(int, int, float);
                 pcl::PointCloud<pcl::PointXYZ>::Ptr ExtractSubcloud(int, int);
                 pcl::PointCloud<pcl::PointXYZ>::Ptr ExtractSubcloudAtAlt(int,int);
                 pcl::PointCloud<pcl::PointXYZ>::Ptr ExtractSubcloudFixedWidth(int, double);
                 void addConstBias(double);
 		void updateWithConstBias(double);
+                void serialize(std::string);
 		double plotDuration;
 		
 

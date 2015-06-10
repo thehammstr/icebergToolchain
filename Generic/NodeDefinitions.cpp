@@ -337,12 +337,12 @@ pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(basic_c
 
 
 void
-Trajectory::saveTrajectoryToFile(char * filename)
+Trajectory::serialize(std::string filename)
 {
    std::cout << "saving trajectory to " << filename << std::endl; 
-   std::ofstream file(filename);
+   std::ofstream file(filename.c_str());
    file << "Format: time - x - y - z - phi - theta - psi - commanded speed - omega - dvl flag - dvl - measurements (scan number 4dof)\n";
-   for (int ii = 0; ii<poses.size(); ii++){
+   for (int ii = 0; ii<poses.size(); ++ii){
       file << poses[ii].time       << "," <<
               poses[ii].xEst()     << "," <<
               poses[ii].yEst()     << "," <<
@@ -350,13 +350,14 @@ Trajectory::saveTrajectoryToFile(char * filename)
               poses[ii].phiEst()   << "," <<
               poses[ii].thetaEst() << "," <<
               poses[ii].psiEst()   << "," <<
-              1.5                  << "," <<  // commanded speed (not used)
-              poses[ii].inputs[0]  << "," <<  // omega z
-              1                    << "," <<  // dvl flag
+              "1.5"                << "," <<  // commanded speed (not used)
+              poses[ii].inputs[0] - poses[ii].biasEst()  << "," <<  // omega z - bias
+              poses[ii].DVLflag    << "," <<  // dvl flag
               poses[ii].DVL[0]     << "," <<
               poses[ii].DVL[1]     << "," <<
               poses[ii].DVL[2];
-      for (int jj = 0; jj<poses[ii].measurements.size(); jj+=5){
+              std::cout << ii << " " << poses[ii].measurements.size() <<std::endl;
+      for (int jj = 0; jj<poses[ii].measurements.size(); ++jj){
           file <<  "," << poses[ii].measurements[jj].featureIndex <<
                    "," << poses[ii].measurements[jj].mx()         <<
                    "," << poses[ii].measurements[jj].my()         <<
