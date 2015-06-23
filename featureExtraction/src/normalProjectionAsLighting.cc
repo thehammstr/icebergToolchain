@@ -35,6 +35,7 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/features2d.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -163,31 +164,7 @@ main (int argc, char** argv)
   /// Draw corners detected
   int r = 4; 
   //cv::imwrite("image1.png",blurredimage1);
-  /***************************************************
-  
-      Feature extraction, detection, and matching 
 
-  ****************************************************/
-  //****************************************************
-  // Create objects
-  //****************************************************
-  cout << "< Creating detector, descriptor extractor and descriptor matcher ..." << endl;
-  cv::Ptr<cv::FeatureDetector> detector = cv::FeatureDetector::create( "GFTT" ); // shi-tomasi
-  std::string descriptorType = "ORB";
-  cv::Ptr<cv::DescriptorExtractor> descriptorExtractor = cv::DescriptorExtractor::create( descriptorType );
-  cv::Ptr<cv::DescriptorMatcher> descriptorMatcher = DescriptorMatcher::create( "BruteForce-Hamming" );
-  //****************************************************
-  // Run it 
-  //****************************************************
-    // image 1
-    std::cout << std::endl << "< Extracting keypoints from first image..." << std::endl;
-    detector->detect( blurredimage1, keypoints1 , mask1 );
-    cout << keypoints1.size() << " points" << endl << ">" << endl;
-    cout << "< Computing descriptors for keypoints from first image..." << endl;
-    cv::Mat descriptors1;
-    descriptorExtractor->compute( blurredimage1, keypoints1, descriptors1 );
-    cout << ">" << endl;
-      
 
   return (0);
 }

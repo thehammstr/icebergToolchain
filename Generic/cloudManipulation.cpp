@@ -746,7 +746,7 @@ cv::Mat imageFromCloudInDirection(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl
   cv::Mat equalizedImage;
   cv::equalizeHist(output,equalizedImage);
 
-#if(1)
+#if(0)
   cv::namedWindow("image", CV_WINDOW_AUTOSIZE);
   cv::imshow("image",output);
   cv::waitKey();

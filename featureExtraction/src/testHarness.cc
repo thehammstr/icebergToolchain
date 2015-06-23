@@ -35,7 +35,7 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
-#include <opencv2/features2d/features2d.hpp>
+#include <opencv2/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 // MACROS
@@ -81,8 +81,8 @@ static int crossCheckMatching( Ptr<DescriptorMatcher>& descriptorMatcher,
 
 
 
-
-
+const float inlier_threshold = 2.5f; // Distance threshold to identify inliers
+const float nn_match_ratio = 0.8f;   // Nearest neighbor matching ratio
 
 int
 main (int argc, char** argv)
@@ -122,8 +122,8 @@ main (int argc, char** argv)
         // view
         normalsVis(cloud1,normals1); 
         normalsVis(cloud2,normals2); 
- cv::namedWindow("image1", CV_WINDOW_AUTOSIZE);
- cv::namedWindow("image2", CV_WINDOW_AUTOSIZE);
+ //cv::namedWindow("image1", CV_WINDOW_AUTOSIZE);
+ //cv::namedWindow("image2", CV_WINDOW_AUTOSIZE);
  pcl::Normal viewDir1 = avgNormal(normals1);
  pcl::Normal viewDir2 = avgNormal(normals2);
  Eigen::Vector3f nominalNormal1(viewDir1.normal_x,viewDir1.normal_y,viewDir1.normal_z);
@@ -134,6 +134,7 @@ main (int argc, char** argv)
   double rollMax = 0.;
   pcl::Normal bestNorm1;
   pcl::Normal bestNorm2; 
+  if (0){
   for (float pitch = 0.; pitch < .1; pitch+= .5){
   //for (float pitch = -.15; pitch < .15; pitch+= .05){
     for (float roll = 0.; roll < .1; roll += .5){
@@ -164,15 +165,20 @@ main (int argc, char** argv)
        cv::imshow("image1", rangeImage1);
        cv::imshow("image2", rangeImage2);
        std::cout<<"pitch,roll,mean,stddev: "<<180./M_PI*pitch<<" "<<180./M_PI*roll<<" | "<<mean1[0]<<" "<<stddev1[0]<<std::endl;
-       cv::waitKey(5000);
+       cv::waitKey(50);
 
     }
   }
   std::cout<<"pitchmax,rollmax,stddev: "<<180./M_PI*pitchMax<<" | "<<180./M_PI*rollMax<<" | "<<maxDev1<<std::endl;
+  } else{
+  bestNorm1 = viewDir1;
+  bestNorm2 = viewDir2;
+  }
   // now extract and display features on best image
   // detecting keypoints
   cv::Mat mask1;
   cv::Mat mask2;
+  cout<< "extracting images" <<endl;
   cv::Mat bestimage1 = imageFromCloudInDirection(cloud1,bestNorm1,.5,.01);
   mask1 = imageFromCloudInDirection(cloud1,bestNorm1,.5,.01,true);
   cv::Mat bestimage2 = imageFromCloudInDirection(cloud2,bestNorm2,.5,.1);
@@ -181,8 +187,10 @@ main (int argc, char** argv)
   std::vector<cv::KeyPoint> keypoints2;
   cv::Mat blurredimage1;
   cv::Mat blurredimage2;
-  cv::blur(bestimage1,blurredimage1,cv::Size(11,11));
-  cv::blur(bestimage2,blurredimage2,cv::Size(11,11));
+  //cv::blur(bestimage1,blurredimage1,cv::Size(3,3));
+  //cv::blur(bestimage2,blurredimage2,cv::Size(3,3));
+  blurredimage1 = bestimage1;
+  blurredimage2 = bestimage2;
   // Parameters for shi tomasi detector
   int maxCorners = 25;
   double qualityLevel = 0.01;
@@ -203,31 +211,38 @@ main (int argc, char** argv)
   // Create objects
   //****************************************************
   cout << "< Creating detector, descriptor extractor and descriptor matcher ..." << endl;
-  cv::Ptr<cv::FeatureDetector> detector = cv::FeatureDetector::create( "GFTT" ); // shi-tomasi
-  std::string descriptorType = "ORB";
-  cv::Ptr<cv::DescriptorExtractor> descriptorExtractor = cv::DescriptorExtractor::create( descriptorType );
-  cv::Ptr<cv::DescriptorMatcher> descriptorMatcher = DescriptorMatcher::create( "BruteForce-Hamming" );
+  cv::Ptr<cv::AKAZE> akaze = cv::AKAZE::create();
+  cv::Mat descriptors1, descriptors2;
   //****************************************************
   // Run it 
   //****************************************************
     // image 1
     std::cout << std::endl << "< Extracting keypoints from first image..." << std::endl;
-    detector->detect( blurredimage1, keypoints1 , mask1 );
+    akaze->detectAndCompute( blurredimage1, mask1, keypoints1 , descriptors1);
+    akaze->detectAndCompute( blurredimage2, mask2, keypoints2 , descriptors2);
+    /*
     cout << keypoints1.size() << " points" << endl << ">" << endl;
     cout << "< Computing descriptors for keypoints from first image..." << endl;
-    cv::Mat descriptors1;
-    descriptorExtractor->compute( blurredimage1, keypoints1, descriptors1 );
     cout << ">" << endl;
     // image 2
     cout << endl << "< Extracting keypoints from second image..." << endl;
-    detector->detect( blurredimage2, keypoints2, mask2 );
     cout << keypoints2.size() << " points" << endl << ">" << endl;
     cout << "< Computing descriptors for keypoints from second image..." << endl;
-    cv::Mat descriptors2;
-    descriptorExtractor->compute( blurredimage2, keypoints2, descriptors2 );
     cout << ">" << endl;
+    */
     // match
-    vector<DMatch> filteredMatches;
+    cv::BFMatcher matcher(cv::NORM_HAMMING);
+    std::vector< std::vector<cv::DMatch> > nn_matches;
+    matcher.knnMatch(descriptors1, descriptors2, nn_matches, 2);
+    vector<KeyPoint> matched1, matched2, inliers1, inliers2;
+    vector<DMatch> good_matches;
+    //cout <<"homography: "<<homography << endl;
+    Mat featureMatchImage;
+    drawMatches( blurredimage1, keypoints1, blurredimage2, keypoints2, nn_matches[0], featureMatchImage );
+    //drawMatches(blurredimage1, points1, blurredimage2, points2, nn_matches[0], res);
+
+    /* 2.4.11 stuff
+    std::vector<DMatch> filteredMatches;
     cv::Mat featureMatchImage;
     crossCheckMatching( descriptorMatcher,descriptors1, descriptors2,filteredMatches);
     // RANSAC
@@ -259,7 +274,7 @@ main (int argc, char** argv)
           //           featureMatchImage, Scalar(0, 255, 0), Scalar(255, 0, 0), matchesMask);
         drawMatches( mask1, keypoints1, mask2, keypoints2, filteredMatches, 
                      featureMatchImage, Scalar(0, 255, 0), Scalar(255, 0, 0), matchesMask);
-
+      
 #if 0
         // draw outliers
         for( size_t i1 = 0; i1 < matchesMask.size(); i1++ )
@@ -273,7 +288,7 @@ main (int argc, char** argv)
     else
         drawMatches( blurredimage1, keypoints1, blurredimage2, keypoints2, filteredMatches, featureMatchImage );
 
-
+   */
 
 
 

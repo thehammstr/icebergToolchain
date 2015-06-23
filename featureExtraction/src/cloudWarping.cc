@@ -127,6 +127,20 @@ int main(int argc, char** argv)
 
    } 
   
+  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer0 (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+  viewer0->setBackgroundColor (0, 0, 0);
+  pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb0(colorCloud1);
+  viewer0->addPointCloud<pcl::PointXYZRGB> (colorCloud1, rgb0,"subcloud1");
+  viewer0->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "subcloud1");
+  viewer0->addCoordinateSystem(10.0);
+  viewer0->setCameraPosition(-190.,200.,-42.,0.,-40.,0.,0.,0.,-1.);
+
+  while (!viewer0->wasStopped ())
+  {
+    viewer0->spinOnce (100);
+    boost::this_thread::sleep (boost::posix_time::microseconds (100000));
+  }
+
 
   boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
   viewer->setBackgroundColor (0, 0, 0);
