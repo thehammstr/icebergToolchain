@@ -164,7 +164,7 @@ pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(basic_c
   viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "trajectory");
   viewer->addCoordinateSystem (1.0);
   viewer->resetCamera();
-  //viewer->setCameraPosition(211.61, -1478.52, -2093.59,-0.98675, -0.1545, -0.0561001,0);
+  viewer->setCameraPosition(241.928, -249.692, 470.148,-0.646306, 0.489756, 0.585173,0); // oblique view on sim berg
   //viewer->setCameraPosition(1312.78,565.839,1102.13,943.747,725.283,265.458, -0.828261,0.355559,0.433083);
   //viewer->setCameraFieldOfView(0.8575);
   //viewer->setCameraClipDistances(86.7214, 3962.83);
@@ -307,6 +307,7 @@ pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(basic_c
   viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "links");
   viewer->addCoordinateSystem (1.0);
   viewer->resetCamera();
+  viewer->setCameraPosition(241.928, -249.692, 470.148,-0.646306, 0.489756, 0.585173,0); // oblique view on sim berg
   //viewer->setCameraPosition(211.61, -1478.52, -2093.59,-0.98675, -0.1545, -0.0561001,0);
   //viewer->setCameraPosition(1312.78,565.839,1102.13,943.747,725.283,265.458, -0.828261,0.355559,0.433083);
   //viewer->setCameraFieldOfView(0.8575);

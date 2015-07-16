@@ -112,7 +112,7 @@ void normalsVis (
      point.g = 0;
      point.b = 255-r;
      if (boundaries.points[ii].boundary_point || isnan((float)boundaries.points[ii].boundary_point) ){
-        point.g = 255;
+        //point.g = 255;
      }
      colorCloud->points.push_back(point); 
  }
@@ -133,7 +133,7 @@ void normalsVis (
   viewer->addPointCloud<pcl::PointXYZRGB> (originCloud, rgb2,"subcloudorigin");
   viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "subcloud");
   viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 5, "subcloudorigin");
-  viewer->addPointCloudNormals<pcl::PointXYZRGB, pcl::Normal> (colorCloud, normals, 15, 1., "normals");
+  //viewer->addPointCloudNormals<pcl::PointXYZRGB, pcl::Normal> (colorCloud, normals, 15, 1., "normals");
   viewer->addCoordinateSystem(10.0);
   viewer->setCameraPosition(-190.,200.,-42.,0.,-40.,0.,0.,0.,-1.);
   //viewer->initCameraParameters ();

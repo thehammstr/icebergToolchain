@@ -90,10 +90,13 @@ int main(int argc, char** argv)
     }
 // update path with initial guess of bias
 	//path.updateWithConstBias(-.00012);
+    path.plotDuration = -1;
+    path.PlotTrajectory();
     path.PlotTrajectory(Links);
-    std::string dummyfile("testserialize.csv");
-    path.serialize(dummyfile);	
-//	path.addConstBias(.0001);
+    path.plotDuration = 10.;
+    //std::string dummyfile("testserialize.csv");
+    //path.serialize(dummyfile);	
+    //	path.addConstBias(.0001);
 /*-------------------------------------------------*/
 /*----------- Now do something with the data-------*/
 /*-------------------------------------------------*/
@@ -124,7 +127,7 @@ int main(int argc, char** argv)
   double bestCost = 1e12;
   double biasguess = 1.;
 
-for (int jSweep = -8; jSweep < -9; jSweep ++ ){
+for (int jSweep = -4; jSweep <= -5; jSweep ++ ){
     float iSweep = float(jSweep)*0.0001;
     // initialize problem
     ceres::Problem problem;
@@ -168,7 +171,7 @@ for (int jSweep = -8; jSweep < -9; jSweep ++ ){
     options.linear_solver_type = ceres::ITERATIVE_SCHUR; //SPARSE_SCHUR;
     options.max_solver_time_in_seconds = 12800.;
     options.minimizer_progress_to_stdout = true;
-    options.max_num_iterations = 50;
+    options.max_num_iterations = 1;
     ceres::Solver::Summary summary;
     //for (int jj = 0; jj < actualMaxIter/options.max_num_iterations; jj++){
     	ceres::Solve(options, &problem, &summary);
@@ -193,6 +196,7 @@ for (int jSweep = -8; jSweep < -9; jSweep ++ ){
         path.PlotTrajectory(Links);	
     // Anchor the origin
     // For each time t    
+  for (int iAnneal = 1; iAnneal > 0; iAnneal-=1){
         ceres::Problem problem;
 
     for (int ii = 1; ii<path.poses.size(); ii++){
@@ -209,7 +213,8 @@ for (int jSweep = -8; jSweep < -9; jSweep ++ ){
     
     // add icp links
     for (int jj = 0; jj<Links.size(); jj++){
-        double relativeWeight = .01;
+        //double relativeWeight = .01*(double)iAnneal;
+        double relativeWeight = .1*(double)iAnneal;
         ceres::CostFunction* icp_cost_function = 
                 RegistrationError::Create(Links[jj],relativeWeight);
         ceres::LossFunction* loss_fxn = new ceres::HuberLoss(20.);
@@ -231,7 +236,7 @@ for (int jSweep = -8; jSweep < -9; jSweep ++ ){
     options.linear_solver_type = ceres::ITERATIVE_SCHUR; //SPARSE_SCHUR;
     options.max_solver_time_in_seconds = 12800.;
     options.minimizer_progress_to_stdout = true;
-    options.max_num_iterations = 500;
+    options.max_num_iterations = 3000;
     ceres::Solver::Summary summary;
     // SOLVE
 
@@ -247,6 +252,7 @@ for (int jSweep = -8; jSweep < -9; jSweep ++ ){
 
     ceres::Solve(options, &problem, &summary);
     std::cout << summary.FullReport() << "\n";
+  } // end annealing
     path.plotDuration = -1.; // keep plot up indefintely
 
 

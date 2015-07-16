@@ -31,5 +31,6 @@ plt.subplot(313)
 plt.scatter(time, bias, c='y', alpha=0.5)
 print time[-1]
 plt.scatter(time,-0.0006788*np.sin((np.pi/time[-1])*time))
+#plt.scatter(time,0.0001*np.ones(time.shape),c='r')
 plt.show()
 
