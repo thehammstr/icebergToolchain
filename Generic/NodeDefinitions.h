@@ -5,6 +5,7 @@
 #include "ceres/rotation.h"
 #include <vector>
 #include <string>
+#include <math.h>
 #include "CSVRow.h"
 // PCL stuff
 #include <boost/thread/thread.hpp>
@@ -102,6 +103,7 @@ class Trajectory{
                 pcl::PointCloud<pcl::PointXYZ>::Ptr ExtractSubcloudAtAlt(int,int);
                 pcl::PointCloud<pcl::PointXYZ>::Ptr ExtractSubcloudFixedWidth(int, double);
                 void addConstBias(double);
+                void addBias(void);
 		void updateWithConstBias(double);
                 void serialize(std::string);
 		double plotDuration;

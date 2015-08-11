@@ -90,13 +90,14 @@ int main(int argc, char** argv)
     }
 // update path with initial guess of bias
 	//path.updateWithConstBias(-.00012);
-    path.plotDuration = -1;
+    //path.plotDuration = -1;
     path.PlotTrajectory();
     path.PlotTrajectory(Links);
     path.plotDuration = 10.;
     //std::string dummyfile("testserialize.csv");
     //path.serialize(dummyfile);	
     //	path.addConstBias(.0001);
+    	//path.addBias(); // adds sinusoidal bias
 /*-------------------------------------------------*/
 /*----------- Now do something with the data-------*/
 /*-------------------------------------------------*/
@@ -127,7 +128,7 @@ int main(int argc, char** argv)
   double bestCost = 1e12;
   double biasguess = 1.;
 
-for (int jSweep = -4; jSweep <= -5; jSweep ++ ){
+for (int jSweep = -2; jSweep <= -20; jSweep ++ ){
     float iSweep = float(jSweep)*0.0001;
     // initialize problem
     ceres::Problem problem;
@@ -287,7 +288,7 @@ for (int jSweep = -4; jSweep <= -5; jSweep ++ ){
     }
     // now save
     path.serialize(outfileName);
-    /* 
+     
     ofstream outfile;
     outfile.open("output.csv");	 
     //outfile << "t,x,y,psi,bias,input1,input2"<<endl;
@@ -304,7 +305,7 @@ for (int jSweep = -4; jSweep <= -5; jSweep ++ ){
 		//cout << path.poses[ii].state[8]<< ' ' << path.poses[ii].state[9] <<endl;
 	
     } 
-    */
+    
     
 
 }
