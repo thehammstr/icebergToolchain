@@ -1,14 +1,15 @@
 
 \documentclass[12pt]{amsart}
 \usepackage{geometry} % see geometry.pdf on how to lay out the page. There's lots.
+\usepackage{hyperref}
 \geometry{a4paper} % or letter or a5paper or ... etc
 % \geometry{landscape} % rotated page geometry
 
 % See the ``Article customise'' template for come common customisations
 
-\title{}
-\author{}
-\date{} % delete this line to display the current date
+\title{Iceberg Mapping Toolchain User Guide}
+\author{Marcus Hammond}
+%\date{} % delete this line to display the current date
 
 %%% BEGIN DOCUMENT
 \begin{document}
@@ -16,7 +17,56 @@
 \maketitle
 \tableofcontents
 
-\section{}
-\subsection{}
+This guide explains the usage of the iceberg mapping code toolchain I built in the course of my PhD. I apologize in advance, as it is not particularly streamlined.
+
+By the end, the reader should be able to take raw mb88 files and produce a corrected point cloud of iceberg or canyon data. 
+
+The instructions assume you're running Ubuntu. I haven't tested it on anything else. 
+
+\section{Software Requirements}
+
+Many of the requirements listed have a number of dependencies that must also be installed. I recommend using a package manager like apt-get or homebrew (or pip, for python) wherever possible. Some of them must be made from source.
+
+\subsection*{C++ compiler/cmake/make}
+If you don't have a C++ compiler or the other standard tools like cmake and make, get them now. You shouldn't necessarily delete matlab, but it wouldn't hurt to consider it.
+
+Go on, I'll wait...
+
+I use gcc/g++.
+
+\subsection*{Python}
+Great scripting language. It probably already came preinstalled, but I use the one from homebrew, since it plays nice with the other homebrew modules and pip for package installation.
+
+\subsection*{mbsystem}
+This is a software library written and curated mostly by Dave Caress of MBARI. It interfaces with many types of sonar, and in the hands of a skilled user, is a very powerful tool for creating maps of the seafloor, etc. In the hands of unskilled users, it is a terrifying collection of functions and data structures with cryptic names and obscure purpose. Just trying to install it has been know to make grown men cry, but it is an ARL right of passage. Go boldly, and leave instructions with your next of kin should you not return.
+
+Install instructions: \url{http://www.ldeo.columbia.edu/res/pi/MB-System/}
+
+mbsystem cookbook (essentially, the manual): \url{http://www.mbari.org/data/mbsystem/mb-cookbook/}
+
+\subsection*{Point Cloud Library (pcl)}
+This is an open source library for manipulating and visualizing point clouds of data. It's pretty slick, and is especially good when visualizing large datasets that would destroy matlab. It can be a little overwhelming to try to descend into the guts, especially if you're new to C++, but it has a lot of good tutorials and absolutely beats reinventing the wheel.
+
+The one problem I had was that I could never get it to run on Mac OSX. As of June 2015 or so, there was an issue with VTK for OSX. VTK (The Visualization Toolkit) runs, you guessed it, the point cloud visualizations. By the time you read this, the issue may have been resolved. I haven't checked in a while.
+
+Should be a pretty easy install if you go with the prebuilt binaries: 
+\url{http://pointclouds.org/downloads/linux.html}
+
+\subsection*{OpenCV}
+Computer vision! If you're only doing manual correspondence with the GUI, this really isn't necessary, but I'm a n00b at structuring C++ projects, so I think some modules think they depend on opencv when they don't really use it. Pure laziness/ignorance. Sorry.
+
+\url{http://docs.opencv.org/doc/tutorials/introduction/linux_install/linux_install.html}
+
+\subsection*{Ceres}
+This is a Google nonlinear least squares solver and does the heavy lifting for the GraphSLAM optimization.
+
+\url{http://ceres-solver.org/}
+
+\section{Code Structure}
+
+\section{Procedure}
+\subsection{Select region of interest using mbsystem}
+\subsection{Convert mb88 files to csv}
+\subsection{Clean data }
 
 \end{document}
