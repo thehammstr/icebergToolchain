@@ -19,6 +19,8 @@ _BMX_ = 6
 _BMY_ = 7
 _BMZ_ = 8
 
+_SUBSAMPLE_ = 2
+
 def stateParse(rowList, refState = np.zeros((6,1))):
    # state = [x y z phi theta psi]
    [zone,east,north] = utm.latlon_to_utm("Everest",float(rowList[_LAT_]),float(rowList[_LON_]))
@@ -39,16 +41,20 @@ def beamParse(rowList):
 def main(args):
    if (len(sys.argv) < 2) :
       # default
-      filename = '../DATA/Soquel20121031/fullWallextractedData.csv'
+      print 'usage: python cleanData.py [inputFileName] [outputFilePath]'
+      print 'using defaults:'
+      filename = 'extractedData.csv'
    else:
       # something exciting?
       filename = sys.argv[1]
 
-   print filename
+   print 'input: ',filename
    if (len(sys.argv) < 3):
-      outfilePath = '../DATA/Soquel20121031/'
+      outfilePath = ''
    else:
       outfilePath = sys.argv[2]
+   print 'output path: ', outfilePath
+   print 'subsample factor: ', _SUBSAMPLE_
    csvfile = open(filename,'rb')
    datareader = csv.reader(csvfile,delimiter=',')
    header = next(datareader,None)
@@ -128,7 +134,7 @@ def main(args):
          else:
             # if we're not on a new timestamp
             # process scan
-            if (beamCounter < 500):
+            if (beamCounter < 512):
                beam_t = beamParse(row);
                beams_t[beamCounter,:] = beam_t[:,0]
                beamCounter += 1
@@ -171,7 +177,7 @@ def main(args):
    printScansToCSV(bigMama,beamHist,outfile=outfilePath+"state_and_ranges.csv")
 
 
-def cleanScan(scanInput,subsample = 2):
+def cleanScan(scanInput,subsample = 1):
     scan = scanInput[0:scanInput.shape[0]:subsample]
     #return cleaned scan and normals
     nScans,a = scan.shape
@@ -246,7 +252,7 @@ def printScansToCSV(trajectory,beamHist,outfile='state_and_ranges.csv'):
       for jj in range(1,stateSize):
          file_object.write(",%f" % trajectory[ii,jj])
       # clean the scan
-      scans,normals = cleanScan(beamHist[ii],2)
+      scans,normals = cleanScan(beamHist[ii],_SUBSAMPLE_)
       numScans = np.shape(scans)[0]
       # write to file
       for jj in range(numScans):
