@@ -20,7 +20,8 @@ int main (int argc, char **argv)
 	int	flag = 0;
 
         /* CSV file output variables */
-	char filename[] = "../DATA/Soquel20121031/fullWallextractedData.csv";
+	//char filename[] = "../DATA/Soquel20121031/extractedData.csv";
+	char filename[] = "extractedData.csv";
 	char* mode = "w";
 	FILE * outFile;
 	//outFile = fopen(filename, mode);

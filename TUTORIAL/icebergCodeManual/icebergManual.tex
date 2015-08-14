@@ -2,6 +2,7 @@
 \documentclass[12pt]{amsart}
 \usepackage{geometry} % see geometry.pdf on how to lay out the page. There's lots.
 \usepackage{hyperref}
+\usepackage{listings}
 \geometry{a4paper} % or letter or a5paper or ... etc
 % \geometry{landscape} % rotated page geometry
 
@@ -64,9 +65,106 @@ This is a Google nonlinear least squares solver and does the heavy lifting for t
 
 \section{Code Structure}
 
+All code is contained in the git project ``icebergToolchain," and arranged into subfolders roughly by function.
+
+\subsection{dataExtractionAndProcessing}
+
+You guessed it: this folder houses code to extract relevant information from mbsystem and process it into a format that plays nice with the other code modules. No motion estimation or loop closure detection is done here.
+
+\subsection{Generic}
+
+Class definitions and functions that are useful across multiple modules.
+
+\subsection{manualCorrespondence}
+
+This folder houses the GUI for interactively detecting and encoding loop closure information 
+
+\subsection{featureExtraction}
+
+All pseudo-image processing code, including the automated loop closure detector. Upon writing this, there still isn't great integration between this and the manual GUI module.
+
+\subsection{ceres}
+
+This is where the GraphSLAM is done. The name comes from the Google Ceres solver.
+
 \section{Procedure}
+
+The process to take mb88 files and turn them into an octree-ready point cloud has several steps. It would be amazing for it to all be integrated into the GUI one day, but as of now it is not. It is also quite inefficient with data storage: most of the intermediate files are human-readable .csv files, which take up much more space than binaries.
+
 \subsection{Select region of interest using mbsystem}
+
+Narrow down the area of data you care about by using the mbdatalist command line tool. 
+\vspace{12pt}
+\begin{tiny}
+\begin{lstlisting}
+#!/bin/bash 
+# extract mb88 files
+ls -1 | grep mb88$ > tmplist
+# make datalist
+mbdatalist -F-1 -I tmplist -R-121.995833/-121.9875/36.776389/36.780556 \ > wall-datalist2
+mbm_plot -F-1 -I wall-datalist2 -N -C -G1 
+./wall-datalist.cmd 
+\end{lstlisting}
+\end{tiny}
+\vspace{12pt}
+Now a line-by-line breakdown:
+\begin{lstlisting}
+ls -1 | grep mb88$ > tmplist
+\end{lstlisting}
+This just dumps all mb88 filenames into a list that mbsystem can use
+\vspace{12pt}
+\begin{tiny}
+\begin{lstlisting}
+mbdatalist -F-1 -I tmplist -R-121.995833/-121.9875/36.776389/36.780556 \ > wall-datalist
+\end{lstlisting}
+\end{tiny}
+\normalsize
+There's a lot going on here. The important part is that you're calling mbdatalist on the input file `tmplist', which contains all the mb88 files, then using the -R command to limit the data to a box defined by the four numbers to follow. They are lon-min/lonmax/latmin/latmax. You then store the output into another datalist, in this case, `wall-datalist.'
+
+The last two lines of code just use the built-in mbsystem tools to display the data you've just extracted, to make sure it's what you want. the wall-datalist file (or whatever you want to name it) is the input for the next step in the process.
+
+The file ``dataExtractionAndProcessing/getThatData.sh" can be run within a file containing a bunch of mb88 files and should do this. You'll need to go in and change the lat-lon boundaries if you're processing something different from Soquel canyon.
+
+
 \subsection{Convert mb88 files to csv}
-\subsection{Clean data }
+
+MBsystem scares me, so I touched the code as little as possible to get the data I needed. Think of it as a special forces hostage rescue situation, except instead of Navy Seals, you have The Three Stooges. Most of the code I stripped from examples written by Dave Caress for the mbsystem developers workshop. I was just trying not to break something. 
+
+The file of interest is 
+\begin{lstlisting}
+dataExtractionAndProcessing/extractWallData.c
+\end{lstlisting}
+which can be compiled using \textbf{make}.
+\vspace{12pt}
+Then call it using the following format
+\begin{small}
+\begin{lstlisting}
+./extractWallData -F-1 -I [path to datalist] -O [path to output csv]
+\end{lstlisting}
+\end{small}
+The -F is a formatting flag. The -I is a flag denoting input. The [path to datalist] refers to the datalist you created with the mbdatalist command in the previous section. If the -O option is omitted, it will default to ``extractedData.csv" in the current folder.
+
+This dumps everything into an enormous csv file, with one beam per line. There's a lot of redundant information, since each beam has its corresponding pose listed as well. It probably wouldn't take too much work to clean this up in the C code, but I ended up doing it in python in the next section.  
+
+\subsection{Clean data}
+The next call is 
+\begin{lstlisting}
+dataExtractionAndProcessing/cleanData.py [input file] [output folder]
+\end{lstlisting}
+
+In this step, the data is reformatted so that each line in the data file only has \emph{one pose} with many sonar readings. It also applies a few heuristics to scrub the data, taking out spurious soundings. It clusters soundings, and any clusters with fewer than a given number of members are deleted. This reduces ``speckle" noise, but isn't perfect. This file also performs subsampling. Setting the variable \_SUBSAMPLE\_ at the top of the file to `N' extracts every Nth range from the scan (i.e. \_SUBSAMPLE\_ = 3 reduces the density of the point cloud by a factor of 3).
+
+The script places a file called ``state\_and\_ranges.csv" into the output folder. This is transformed so that the first record is at the origin. This is the main data structure used as input/output for the loop closure and optimization. 
+
+The script also creates a file called ``fullstatehist.csv" in the same folder, which includes the original nav data.
+
+Each row of the output has the columns:
+time, x, y, z, phi, theta, psi, commanded speed, $\omega_z$, dvl flag, DVL, multibeam measurements
+
+The dvl flag states whether the DVL was in lock. The dvl measurements are the body-xyz velocity readings. Each multibeam measurement is four elements long. The first three are the vehicle body-xyz components of the beam. The fourth was included to capture curvature information, but is not currently used.
+
+\subsection{Automated Correspondence Detection}
+
+This functionality was broken in the conversion to OpenCV3.0. 
 
 \end{document}
