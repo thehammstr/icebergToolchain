@@ -306,7 +306,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Accept/write</string>
+     <string>Accept</string>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_ICP">

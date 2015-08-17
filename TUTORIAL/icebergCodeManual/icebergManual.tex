@@ -58,6 +58,12 @@ Computer vision! If you're only doing manual correspondence with the GUI, this r
 
 \url{http://docs.opencv.org/doc/tutorials/introduction/linux_install/linux_install.html}
 
+\subsection*{QT}
+
+This is a framework for constructing GUIs. 
+
+\url{http://www.qt.io/developers/}
+
 \subsection*{Ceres}
 This is a Google nonlinear least squares solver and does the heavy lifting for the GraphSLAM optimization.
 
@@ -165,6 +171,85 @@ The dvl flag states whether the DVL was in lock. The dvl measurements are the bo
 
 \subsection{Automated Correspondence Detection}
 
-This functionality was broken in the conversion to OpenCV3.0. 
+This functionality was broken in the conversion to OpenCV3.0. SIFT is no longer present in the standard library distribution, and I haven't yet figured out how to put it back. 
 
+The files of interest are
+\begin{lstlisting}
+featureExtraction/build/pullImages
+featureExtraction/python/analyzeRangeImages
+\end{lstlisting}
+
+The former converts sonar point cloud submaps to range images, while the latter looks (looked?) for matches between these range images. But as I said, it's been broken since converting to the new version of opencv.
+
+\subsection{Manual correspondence GUI}
+
+This thing is fun/useful. The source code is in 
+\begin{lstlisting}
+manualCorrespondence/src
+\end{lstlisting}
+
+To build, navigate to manualCorrespondence/build, then type 
+
+\begin{lstlisting}
+cmake ../src
+make
+\end{lstlisting}
+
+If there are no errors, you'll see the executable 
+\begin{lstlisting}
+manualCorrespondence/build/correspondenceGUI
+\end{lstlisting}
+
+Call this with the paths to the input state\_and\_ranges.csv file, as well as a recordedLinks.csv file, if it exists.
+
+\begin{lstlisting}
+./correspondenceGUI [path to input] [link file name (optional)]
+\end{lstlisting}
+
+Once this is open, you can find correspondences to your heart's content. The GUI user guide is in the appendix of my dissertation.
+
+\subsection{GraphSLAM with ceres}
+
+The two important files in this step are 
+\begin{lstlisting}
+ceres/solveIcebergPosesOnly.cc
+ceres/ResidualBlockDefinitions.h
+\end{lstlisting}
+
+The solveIcebergPosesOnly.cc reads in the data and link file, and builds the ceres problem. 
+
+ResidualBlockDefinitions.h defines the components of the cost function, i.e. defines the cost function and weight associated with each type of link in the GraphSLAM problem. This is where the bulk of solution knob-twiddling occurs. For example:
+\begin{lstlisting}
+	if (pose1.DVLflag){ // check for dvl lock
+	residual[_X_] = 1.*Xres ;
+	residual[_Y_] = 1.*Yres ;
+	} else {
+	residual[_X_] = .8*Xres ;
+	residual[_Y_] = .8*Yres ;
+	}
+\end{lstlisting}
+
+The ``magic numbers" just to the right of the equals sign are the weights. These should all be \#defined somewhere, but I haven't gotten around to it. 
+
+Compile the solver with the commands 
+\begin{lstlisting}
+cmake .
+make
+\end{lstlisting}
+
+Then run the program 
+\begin{lstlisting}
+./solveIceberg --input=[input data file] --links=[link file]
+\end{lstlisting}
+
+This will take a while, and will put a modified `state\_and\_ranges' file in the same folder as the input. This can be reopened with the manualCorrespondence GUI if necessary to refine the matches. It also produces a file called `output\_cloud.pcd' and another called `output\_cloud.pcd' in the current directory. The former is the corrected point cloud, and the latter is the corrected trajectory, in XYZRGB format.
+
+
+The file \emph{buildandrun.sh} combines all these steps for convenience.
+
+The pcd files can be converted to csv files of just xyz data using 
+\begin{lstlisting}
+Generic/pcd2xyz.py .
+\end{lstlisting}
 \end{document}
+

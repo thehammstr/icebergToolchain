@@ -194,7 +194,6 @@ bool Trajectory::PlotTrajectory(std::vector<PoseLink> links){
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr basic_cloud_ptr (new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr featureCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PointCloud<pcl::PointXYZ>::Ptr featureCloud_xyz (new pcl::PointCloud<pcl::PointXYZ>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr headingCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr linkCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
 
@@ -228,18 +227,13 @@ bool Trajectory::PlotTrajectory(std::vector<PoseLink> links){
 	for (int jj = 0; jj<poses[ii].measurements.size(); jj+=5){
 		FeatureNode feature_j(poses[ii],poses[ii].measurements[jj]);
 		pcl::PointXYZRGB featurePoint;
-		pcl::PointXYZ featurePoint_xyz;
 		featurePoint.x = feature_j.state[0];
 		featurePoint.y = feature_j.state[1];
 		featurePoint.z = feature_j.state[2];
-       		featurePoint_xyz.x = feature_j.state[0];
-		featurePoint_xyz.y = feature_j.state[1];
-		featurePoint_xyz.z = feature_j.state[2];
                 featurePoint.r = color;
                 featurePoint.g = brightness-(color%(brightness/2));
                 featurePoint.b = brightness-color;
 		featureCloud->points.push_back(featurePoint);
-		featureCloud_xyz->points.push_back(featurePoint_xyz);
 		
 
 	}
@@ -289,9 +283,7 @@ bool Trajectory::PlotTrajectory(std::vector<PoseLink> links){
   basic_cloud_ptr->width = 1;
   basic_cloud_ptr->height = basic_cloud_ptr->points.size();
   featureCloud->width = 1;
-  featureCloud_xyz->width = 1;
   featureCloud->height = featureCloud->points.size();  
-  featureCloud_xyz->height = featureCloud_xyz->points.size();  
   headingCloud->width = 1;
   headingCloud->height = headingCloud->points.size(); 
   linkCloud->width = 1;
@@ -336,7 +328,6 @@ pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(basic_c
   std::cout << "width: " << featureCloud->width << ", height:  "<< featureCloud->height<<std::endl;
   //pcl::io::savePCDFileASCII("output_traj.pcd",*basic_cloud_ptr);
   pcl::io::savePCDFileASCII("output_cloud.pcd",*featureCloud);
-  pcl::io::savePCDFileASCII("output_cloudxyz.pcd",*featureCloud_xyz);
 
   return true;
 }

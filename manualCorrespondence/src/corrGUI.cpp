@@ -163,6 +163,7 @@ PCLViewer::loadTrajectory( char * filename, const char * linkFileName  )
    renderSubClouds();
    viewer2->resetCamera ();
    ui->qvtkWidget_2->update ();
+   
    drawGoodLinks(); 
    return;
 }
@@ -348,7 +349,7 @@ PCLViewer::writeButtonPressed ()
     link.Transform[11] = path.poses[idx2].zEst() - path.poses[idx1].zEst();
   }
   validLinks.push_back(link);
-  writeLinksToFile();
+  //writeLinksToFile();
   // NOW DISPLAY LINKS
   drawGoodLinks();
   } else {
@@ -362,8 +363,8 @@ PCLViewer::drawGoodLinks()
   recordedLinks->points.clear();
 
   //std::cout<< "Drawing good links!"<<std::endl;
-  //std::cout << "Valid Links: " << validLinks.size() << std::endl;
-
+  std::cout << "Valid Links: " << validLinks.size() << std::endl;
+  
   for (int iGood = 0; iGood < validLinks.size(); ++iGood){
     PointT pt1 = trajectory->points[validLinks[iGood].idx1];
     PointT pt2 = trajectory->points[validLinks[iGood].idx2];
@@ -385,9 +386,10 @@ PCLViewer::drawGoodLinks()
      }
      recordedLinks->points.push_back(goodPoint);
     }
+  } 
   viewer->updatePointCloud (recordedLinks, "recordedLinks");
   ui->qvtkWidget->update ();
-  } 
+
 }
 
 void 
@@ -401,10 +403,11 @@ PCLViewer::deleteSelected()
         selectedLink = validLinks.size() - 1;
      }
      highlightLink(selectedLink);
-     writeLinksToFile();
+     //writeLinksToFile();
      drawGoodLinks();
    } else {
      printf("nothing to delete\n");
+     drawGoodLinks();
    }
    return;
 }
