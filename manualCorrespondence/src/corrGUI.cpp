@@ -555,7 +555,7 @@ PCLViewer::deleteButtonPressed()
         selectedLink=validLinks.size()-1;
         highlightLink(selectedLink);
      }
-     writeLinksToFile();
+     //writeLinksToFile();
      drawGoodLinks();
    } else {
      printf("nothing to delete\n");
