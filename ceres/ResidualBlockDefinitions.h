@@ -264,8 +264,8 @@ struct RegistrationError {
         // for 40m standoff distance, weight of PSI term = 40*weight of x term
 	//residual[_PSI_] = 40.*_ALFA_*(x2Link[1] - x2Body1[1]);  // point of reference: .025rad = 1m error at 40m standoff distance
 	residual[_PSI_] = .1*relWeight*(x2Link[1] - x2Body1[1]);  // point of reference: .025rad = 1m error at 40m standoff distance
-        residual[_B_] = .0*relWeight*(AvgMotion + poseEst2[_B_]); //.001
-        residual[_B_+1] = .0*relWeight*(AvgMotion + poseEst1[_B_]); //10000.0*relWeight*((x2Link[1] - x2Body1[1])/(link.t2-link.t1) + poseEst2[_B_]);
+        residual[_B_] = relWeight*(AvgMotion + poseEst2[_B_]); //.001
+        residual[_B_+1] = relWeight*(AvgMotion + poseEst1[_B_]); //10000.0*relWeight*((x2Link[1] - x2Body1[1])/(link.t2-link.t1) + poseEst2[_B_]);
 	return true;
   }
    // Factory to hide the construction of the CostFunction object from

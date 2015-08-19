@@ -12,8 +12,11 @@ find_package (Qt4  REQUIRED)
 find_package (VTK REQUIRED)
 find_package( OpenCV 2.4 REQUIRED )
 find_package (PCL 1.7 REQUIRED)
+FIND_PACKAGE (Ceres REQUIRED)
 
 include_directories ("../../Generic")
+include_directories ("../../ceres")
+INCLUDE_DIRECTORIES(${CERES_INCLUDE_DIRS})
 include_directories (${OpenCV_INCLUDE_DIRS})
 link_directories (${OpenCV_LIBRARY_DIRS})
 add_definitions (${OpenCV_DEFINITIONS})
@@ -40,5 +43,5 @@ ADD_EXECUTABLE  (correspondenceGUI ${project_SOURCES}
                                 ${project_FORMS_HEADERS}
                                 ${project_HEADERS_MOC})
 
-TARGET_LINK_LIBRARIES (correspondenceGUI ${QT_LIBRARIES} ${PCL_LIBRARIES} ${VTK_LIBRARIES} ${OpenCV_LIBS} gflags)
+TARGET_LINK_LIBRARIES (correspondenceGUI ${QT_LIBRARIES} ${CERES_LIBRARIES} ${PCL_LIBRARIES} ${VTK_LIBRARIES} ${OpenCV_LIBS} gflags)
 

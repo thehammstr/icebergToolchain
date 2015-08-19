@@ -68,6 +68,7 @@ PCLViewer::PCLViewer (QWidget *parent) :
   connect (ui->pushButton_delete_select, SIGNAL (clicked ()), this, SLOT (deleteSelected ()));
   connect (ui->pushButton_load_links, SIGNAL (clicked ()), this, SLOT (readLinksFromFile ()));
   connect (ui->pushButton_write_all, SIGNAL (clicked ()), this, SLOT (writeLinksToFile ()));
+  connect (ui->pushButton_SLAM, SIGNAL (clicked ()), this, SLOT (runGraphSLAM ()));
 
   // Connect text boxes
   connect (ui->plainTextEdit_linkfile, SIGNAL (textChanged ()), this, SLOT (fileNameChanged ()));
@@ -82,7 +83,7 @@ PCLViewer::PCLViewer (QWidget *parent) :
   // Connect spin box with function (select link)
   connect (ui->spinBox_link, SIGNAL (valueChanged (int)), this, SLOT (highlightLink (int) ));
   // This thing doesn't do anything right now.
-  connect (ui->horizontalSlider_p, SIGNAL (valueChanged (int)), this, SLOT (pSliderValueChanged (int)));
+  connect (ui->horizontalSlider_p, SIGNAL (valueChanged (int)), this, SLOT (addBias (int)));
   // Connect rendering timer for clicking through indices
   connect (renderTimer,SIGNAL (timeout()), this, SLOT (renderSubClouds() ));
   // initialize pointclouds
@@ -339,6 +340,9 @@ PCLViewer::writeButtonPressed ()
   PoseLink link;
   link.idx1 = idx1;
   link.idx2 = idx2;
+  link.t1 = path.poses[link.idx1].time;
+  link.t2 = path.poses[link.idx2].time;
+
   int poo = 0;
   for (int iq = 0; iq < 4; iq++){
     for ( int jq = 0; jq < 4; jq++){
@@ -474,6 +478,8 @@ PCLViewer::readLinksFromFile()
           PoseLink inputLink;
           inputLink.idx1 = std::atoi(parsedInput[0].c_str());
           inputLink.idx2 = std::atoi(parsedInput[1].c_str());
+          inputLink.t1 = path.poses[inputLink.idx1].time;
+          inputLink.t2 = path.poses[inputLink.idx2].time;
           for (int iLink = 0; iLink < 16; ++iLink){
              inputLink.Transform[iLink] = std::atof(parsedInput[iLink+2].c_str());
           }
@@ -720,6 +726,92 @@ PCLViewer::icpButtonPressed ()
 }
 
 
+
+
+void
+PCLViewer::runGraphSLAM()
+{
+  std::cout<<"SLAM button pressed"<<std::endl;
+
+  ceres::Problem problem;
+  
+  for (int ii = 1; ii<path.poses.size(); ii++){
+        
+	ceres::CostFunction* odometry_cost_function = 
+		OdometryError::Create(path.poses[ii-1],path.poses[ii]);
+	// each time has odometry link
+	ceres::LossFunction* loss_fxn = new ceres::HuberLoss(10.0);
+	problem.AddResidualBlock(odometry_cost_function,
+					loss_fxn,
+					path.poses[ii-1].state,
+					path.poses[ii].state);
+  }
+  std::cout<<"Odometry built"<<std::endl;
+
+    // add icp links
+   std::cout<<"Num. valid links: "<<validLinks.size()<<std::endl;
+   std::cout<<"STATE_SIZE: "<<STATE_SIZE<<std::endl;
+    for (int jj = 0; jj<validLinks.size(); jj++){
+        //double relativeWeight = .01*(double)iAnneal;
+        double relativeWeight = .1;
+        ceres::CostFunction* icp_cost_function = 
+                RegistrationError::Create(validLinks[jj],relativeWeight);
+        ceres::LossFunction* loss_fxn = new ceres::HuberLoss(20.);
+        problem.AddResidualBlock(icp_cost_function,
+                                     loss_fxn,
+                                     path.poses[validLinks[jj].idx1].state,
+                                     path.poses[validLinks[jj].idx2].state);
+
+    }
+    /* hold everything but bias constant in first block*/
+    std::vector<int> const_subset;
+    for (int isub = 0; isub<(_B_); isub++){ 
+	const_subset.push_back(isub);}
+	cout<< "subset " << const_subset.size()<<endl;
+    ceres::SubsetParameterization* subset_parameterization = new ceres::SubsetParameterization(STATE_SIZE,const_subset);
+    problem.SetParameterization(path.poses[0].state,subset_parameterization);
+    //problem.SetParameterBlockConstant(path.poses[0].state); //TODO: can we free up bias[0] to be nonzero?
+    ceres::Solver::Options options;
+    options.linear_solver_type = ceres::ITERATIVE_SCHUR; //SPARSE_SCHUR;
+    options.max_solver_time_in_seconds = 12800.;
+    options.minimizer_progress_to_stdout = true;
+    options.max_num_iterations = 3000;
+    ceres::Solver::Summary summary;
+    // SOLVE
+    ceres::Solve(options, &problem, &summary);
+    std::cout << summary.FullReport() << "\n";
+    std::cout << "Updating trajectory..." <<std::endl;
+    updateTrajectory();
+    showSubCloudExtents();
+    drawGoodLinks();
+    RGBsliderReleased();
+    std::cout << "Saving point cloud to output_cloud.pcd" <<std::endl;
+    cloud->width = 1;
+    cloud->height = cloud->points.size();
+    pcl::io::savePCDFileASCII("output_cloud.pcd",*cloud); 
+    std::cout << "saving solution to state_and_ranges_modified.csv" <<std::endl;
+    std::string outFileName = "state_and_ranges_modified.csv";
+    path.serialize(outFileName);
+    std::cout << "DONE!"<<std::endl;
+    return;
+}
+
+void
+PCLViewer::addBias(int bias)
+{ 
+  path.updateWithConstBias((double)bias / 10000.);
+  updateTrajectory();
+  showSubCloudExtents();
+  drawGoodLinks();
+  updateLinkDisplay();
+  //viewer->updatePointCloud (cloud, "cloud");
+  //viewer->updatePointCloud (trajectory, "trajectory");
+  RGBsliderReleased();
+  //ui->qvtkWidget->update ();
+
+  return;
+}
+
 void
 PCLViewer::RGBsliderReleased ()
 {
@@ -731,6 +823,7 @@ PCLViewer::RGBsliderReleased ()
     cloud->points[i].b = blue;
   }*/
   renderSubClouds();
+  viewer->updatePointCloud (trajectory, "trajectory");
   viewer->updatePointCloud (cloud, "cloud");
   ui->qvtkWidget->update ();
 }
@@ -800,3 +893,5 @@ PCLViewer::~PCLViewer ()
 {
   delete ui;
 }
+
+

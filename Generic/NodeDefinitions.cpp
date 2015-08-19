@@ -357,7 +357,7 @@ Trajectory::serialize(std::string filename)
               poses[ii].DVL[0]     << "," <<
               poses[ii].DVL[1]     << "," <<
               poses[ii].DVL[2];
-              std::cout << ii << " " << poses[ii].measurements.size() <<std::endl;
+              //std::cout << ii << " " << poses[ii].measurements.size() <<std::endl;
       for (int jj = 0; jj<poses[ii].measurements.size(); ++jj){
           file <<  "," << poses[ii].measurements[jj].featureIndex <<
                    "," << poses[ii].measurements[jj].mx()         <<

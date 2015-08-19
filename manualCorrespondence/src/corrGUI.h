@@ -22,6 +22,11 @@
 #include "CSVRow.h"
 #include "NodeDefinitions.h"
 #include "cloudManipulation.h"
+#include "ceres/ceres.h"
+#include "ceres/rotation.h"
+#include "gflags/gflags.h"
+#include "glog/logging.h"
+#include "ResidualBlockDefinitions.h"
 #include <string>
 #include <iostream>
 typedef pcl::PointXYZRGBA PointT;
@@ -87,6 +92,12 @@ public slots:
 
   void 
   renderSubClouds();
+
+  void
+  runGraphSLAM();
+
+  void
+  addBias(int);
 
 protected:
   boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
