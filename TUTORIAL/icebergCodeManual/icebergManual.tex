@@ -1,5 +1,6 @@
 
 \documentclass[12pt]{amsart}
+\usepackage{graphicx}
 \usepackage{geometry} % see geometry.pdf on how to lay out the page. There's lots.
 \usepackage{hyperref}
 \usepackage{listings}
@@ -28,24 +29,38 @@ The instructions assume you're running Ubuntu. I haven't tested it on anything e
 
 Many of the requirements listed have a number of dependencies that must also be installed. I recommend using a package manager like apt-get or homebrew (or pip, for python) wherever possible. Some of them must be made from source.
 
-\subsection*{C++ compiler/cmake/make}
-If you don't have a C++ compiler or the other standard tools like cmake and make, get them now. You shouldn't necessarily delete matlab, but it wouldn't hurt to consider it.
+\subsection{C++ compiler/cmake/make}
+If you don't have a C++ compiler or the other standard tools like cmake and make, get them now. 
 
 Go on, I'll wait...
 
 I use gcc/g++.
 
-\subsection*{Python}
+\begin{lstlisting}
+sudo apt-get install build-essential
+\end{lstlisting}
+
+\subsection{git}
+
+This is a version control utility, like svn. Unlike svn, however, it has local repositories, so you can track changes and recover lost work/etc even without network connection. 
+
+On Ubuntu: 
+\begin{lstlisting}
+sudo apt-get install git
+\end{lstlisting}
+
+
+\subsection{Python}
 Great scripting language. It probably already came preinstalled, but I use the one from homebrew, since it plays nice with the other homebrew modules and pip for package installation.
 
-\subsection*{mbsystem}
+\subsection{mbsystem}
 This is a software library written and curated mostly by Dave Caress of MBARI. It interfaces with many types of sonar, and in the hands of a skilled user, is a very powerful tool for creating maps of the seafloor, etc. In the hands of unskilled users, it is a terrifying collection of functions and data structures with cryptic names and obscure purpose. Just trying to install it has been know to make grown men cry, but it is an ARL right of passage. Go boldly, and leave instructions with your next of kin should you not return.
 
 Install instructions: \url{http://www.ldeo.columbia.edu/res/pi/MB-System/}
 
 mbsystem cookbook (essentially, the manual): \url{http://www.mbari.org/data/mbsystem/mb-cookbook/}
 
-\subsection*{Point Cloud Library (pcl)}
+\subsection{Point Cloud Library (pcl)}
 This is an open source library for manipulating and visualizing point clouds of data. It's pretty slick, and is especially good when visualizing large datasets that would destroy matlab. It can be a little overwhelming to try to descend into the guts, especially if you're new to C++, but it has a lot of good tutorials and absolutely beats reinventing the wheel.
 
 The one problem I had was that I could never get it to run on Mac OSX. As of June 2015 or so, there was an issue with VTK for OSX. VTK (The Visualization Toolkit) runs, you guessed it, the point cloud visualizations. By the time you read this, the issue may have been resolved. I haven't checked in a while.
@@ -53,10 +68,11 @@ The one problem I had was that I could never get it to run on Mac OSX. As of Jun
 Should be a pretty easy install if you go with the prebuilt binaries: 
 \url{http://pointclouds.org/downloads/linux.html}
 
-\subsection*{OpenCV}
+\subsection{OpenCV}
 Computer vision! If you're only doing manual correspondence with the GUI, this really isn't necessary, but I'm a n00b at structuring C++ projects, so I think some modules think they depend on opencv when they don't really use it. Pure laziness/ignorance. Sorry.
 
 \url{http://docs.opencv.org/doc/tutorials/introduction/linux_install/linux_install.html}
+
 
 \subsection*{QT}
 
@@ -65,9 +81,20 @@ This is a framework for constructing GUIs.
 \url{http://www.qt.io/developers/}
 
 \subsection*{Ceres}
+
 This is a Google nonlinear least squares solver and does the heavy lifting for the GraphSLAM optimization.
 
 \url{http://ceres-solver.org/}
+
+\subsection{icebergToolchain}
+
+You'll [obviously] need the iceberg code too. For now, it's on github:
+
+Navigate to where you want the toolchain to be located and type
+
+\begin{lstlisting}
+git clone https://github.com/thehammstr/icebergToolchain.git
+\end{lstlisting}
 
 \section{Code Structure}
 
@@ -92,6 +119,8 @@ All pseudo-image processing code, including the automated loop closure detector.
 \subsection{ceres}
 
 This is where the GraphSLAM is done. The name comes from the Google Ceres solver.
+
+
 
 \section{Procedure}
 
@@ -164,12 +193,13 @@ The script places a file called ``state\_and\_ranges.csv" into the output folder
 
 The script also creates a file called ``fullstatehist.csv" in the same folder, which includes the original nav data.
 
-Each row of the output has the columns:
+Each row of the output has the columns:\\
 time, x, y, z, phi, theta, psi, commanded speed, $\omega_z$, dvl flag, DVL, multibeam measurements
 
 The dvl flag states whether the DVL was in lock. The dvl measurements are the body-xyz velocity readings. Each multibeam measurement is four elements long. The first three are the vehicle body-xyz components of the beam. The fourth was included to capture curvature information, but is not currently used.
 
 \subsection{Automated Correspondence Detection}
+
 
 This functionality was broken in the conversion to OpenCV3.0. SIFT is no longer present in the standard library distribution, and I haven't yet figured out how to put it back. 
 
@@ -243,6 +273,55 @@ Then run the program
 \end{lstlisting}
 
 This will take a while, and will put a modified `state\_and\_ranges' file in the same folder as the input. This can be reopened with the manualCorrespondence GUI if necessary to refine the matches. It also produces a file called `output\_cloud.pcd' and another called `output\_cloud.pcd' in the current directory. The former is the corrected point cloud, and the latter is the corrected trajectory, in XYZRGB format.
+
+\subsection{Manual correspondence GUI}
+
+The manual correspondence GUI reads the ``state\_and\_ranges.csv" file created by ``cleandata.py" and allows the user to detect and encode loop closure events. The resulting loop closure info is saved to a file with default name ``recordedLinks.csv." 
+
+Each line of the file has the format:
+pose1 index, pose2 index, [16 Transform elements]
+
+The transform is expressed as the rows of a 4x4 homogeneous matrix that maps a point expressed in the vehicle frame at the second pose index to the vehicle frame at the first index.
+
+\subsubsection{Compiling and launching the GUI}
+
+Navigate to the folder named ``manualCorrespondence." If it doesn't exist already, create a ``build folder."
+
+\begin{lstlisting}
+cd manualCorrespondence/build
+cmake ../src
+make
+\end{lstlisting} 
+
+If no errors were encountered, you should have an executable called ``correspondenceGUI" in the build folder. Run this with the path to your state and range csv file as the first argument and the linkfile as an optional second argument.
+
+\subsubsection{Using the GUI}
+
+\include{GUImanual}
+
+\subsection{Solving with Ceres}
+Now to do GraphSLAM
+\subsubsection{Building}
+
+The two most important files are solverIcebergPosesOnly.cc and ResidualBlockDefinitions.h, already discussed above. To build the ceres-powered executable, do the following:
+
+\begin{lstlisting}
+cd ceres
+cmake .
+make
+\end{lstlisting} 
+
+
+
+\subsubsection{Running} Enter the following command:
+\begin{tiny}
+\begin{lstlisting}
+./solveIceberg --input=[state\_and\_ranges.csv file location] --links=[recordedLinks.csv file location]
+\end{lstlisting} 
+\end{tiny}
+This will start churning. Some displays will pop up for debugging, and eventually ceres will run. The output will be saved in several forms/formats:
+
+First, a new state\_and\_ranges\_modified file will be created in the same folder as the original. This can be read by the GUI in order to iterate and encode more loop closures. The multibeam point cloud will be saved as a pcd file (pcl's standard format) in the ceres folder as ``output.pcd'' and the final trajectory point cloud will also be saved as ``output\_traj.pcd.''
 
 
 The file \emph{buildandrun.sh} combines all these steps for convenience.
